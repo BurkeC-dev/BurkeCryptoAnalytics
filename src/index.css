@@ -1,6 +1,355 @@
-body {
+@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap");
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
   margin: 0;
-  background: #0a0a0f;
-  color: white;
-  font-family: sans-serif;
+  padding: 0;
+  height: 100%;
+}
+
+/* ===== Base theme: dark romance purple/blue ===== */
+
+body {
+  font-family: "DM Sans", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  background: radial-gradient(circle at top, #312e81 0, #020617 45%, #000 100%);
+  color: #e5e7f5;
+}
+
+/* Center the app shell */
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+/* Main card */
+
+.app-card {
+  width: 100%;
+  max-width: 1100px;
+  min-height: 520px;
+  border-radius: 32px;
+  padding: 20px;
+  background:
+    radial-gradient(circle at top left, rgba(76, 29, 149, 0.6), transparent 55%),
+    radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.7), transparent 60%),
+    linear-gradient(135deg, #020017, #020617);
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.95);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 18px;
+}
+
+/* ===== Sidebar ===== */
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.sidebar-toggle {
+  align-self: flex-start;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.8);
+  background: rgba(15, 23, 42, 0.98);
+  color: #e5e7f5;
+  font-size: 11px;
+  padding: 6px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sidebar-rail {
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid rgba(129, 140, 248, 0.8);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 52px;
+  transition: width 0.2s ease;
+  overflow: hidden;
+}
+
+.sidebar-rail--open {
+  width: 170px;
+}
+
+.sidebar-item {
+  border-radius: 999px;
+  border: none;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #e5e7f5;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.sidebar-item span.sidebar-label {
+  white-space: nowrap;
+}
+
+.sidebar-item--active {
+  background: linear-gradient(135deg, #a855f7, #38bdf8);
+  color: #020617;
+  font-weight: 600;
+}
+
+/* ===== Main content ===== */
+
+.app-main {
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at top left, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.99));
+  border: 1px solid rgba(129, 140, 248, 0.5);
+  padding: 20px 20px 18px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.95);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Header */
+
+.app-header-title {
+  font-family: "Cinzel", "Times New Roman", serif;
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0;
+  color: #f9fafb;
+}
+
+.app-header-subtitle {
+  font-family: "Cinzel", "Times New Roman", serif;
+  font-size: 16px;
+  margin: 4px 0 2px;
+  color: #e0e7ff;
+}
+
+.app-header-tagline {
+  font-size: 13px;
+  color: #c7d2fe;
+  max-width: 460px;
+  font-style: italic;
+}
+
+/* Tabs + action row */
+
+.app-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.app-tab-row {
+  display: inline-flex;
+  background: rgba(15, 23, 42, 0.95);
+  border-radius: 999px;
+  padding: 4px;
+  gap: 4px;
+  border: 1px solid rgba(55, 65, 81, 0.9);
+}
+
+.app-tab {
+  border-radius: 999px;
+  border: none;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: #9ca3af;
+}
+
+.app-tab--active {
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  color: #f9fafb;
+  font-weight: 600;
+}
+
+.app-add-button {
+  border-radius: 999px;
+  border: none;
+  padding: 7px 15px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, #38bdf8, #a855f7);
+  color: #020617;
+  box-shadow: 0 14px 32px rgba(56, 189, 248, 0.7);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Summary text */
+
+.app-summary-line {
+  font-size: 12px;
+  color: #c7d2fe;
+}
+
+/* Form card */
+
+.app-form-card {
+  border-radius: 20px;
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid rgba(129, 140, 248, 0.7);
+  padding: 12px 14px 14px;
+}
+
+.app-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.app-form-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #a5b4fc;
+}
+
+.app-form-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.app-form-close {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.9);
+  background: rgba(15, 23, 42, 0.98);
+  color: #e5e7f5;
+  cursor: pointer;
+}
+
+/* Fields */
+
+.field-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
+@media (min-width: 720px) {
+  .field-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.field {
+  font-size: 11px;
+  color: #e5e7f5;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field-label {
+  font-size: 11px;
+}
+
+.field-input,
+.field-select {
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.9);
+  background: rgba(15, 23, 42, 0.98);
+  color: #f9fafb;
+  font-size: 12px;
+  padding: 6px 10px;
+  outline: none;
+}
+
+.field-input::placeholder {
+  color: #9ca3af;
+}
+
+.field-select {
+  appearance: none;
+}
+
+/* Form footer */
+
+.app-form-footer {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.app-link-ghost {
+  border: none;
+  background: transparent;
+  font-size: 11px;
+  color: #c7d2fe;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.app-submit {
+  border-radius: 999px;
+  border: none;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, #22c55e, #4ade80);
+  color: #022c22;
+  box-shadow: 0 10px 26px rgba(34, 197, 94, 0.7);
+}
+
+/* Token list */
+
+.app-token-list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.app-token-empty {
+  font-size: 12px;
+  color: #cbd5f5;
+}
+
+/* Make layout stack nicely on small screens */
+
+@media (max-width: 780px) {
+  .app-card {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: auto;
+  }
+
+  .sidebar {
+    flex-direction: row;
+    align-items: center;
+  }
 }
