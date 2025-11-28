@@ -1,405 +1,405 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Burke Crypto Analytics</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+<head>
+<meta charset="UTF-8" />
+<title>Burke Crypto Analytics</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- FONTS -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap"
-      rel="stylesheet"
-    />
+<!-- FONTS -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 
-    <style>
-      /* ------------------------------
-         BASE STYLE RESET
-      ------------------------------ */
+<style>
+/* ------------------------- */
+/* ROOT + RESETS */
+/* ------------------------- */
 
-      :root {
-        --accent-purple: #bfa8ff;
-        --accent-blue: #71c5ff;
-        --accent-soft: #e6d6ff;
-        --text-main: #f6f3ff;
-        --text-muted: #a9b0d6;
-        --danger: #ff5c8a;
-        --success: #5dd9a3;
+:root {
+  --accent-purple: #bfa8ff;
+  --accent-blue: #71c5ff;
+  --accent-soft: #e6d6ff;
+  --text-main: #f6f3ff;
+  --text-muted: #a9b0d6;
+  --glass-bg: rgba(10,12,32,0.55);
+  --underline-gradient: linear-gradient(90deg, #bfa8ff, #71c5ff);
+}
 
-        --shadow-soft: 0 24px 80px rgba(0, 0, 0, 0.55);
-        --glass-bg: rgba(10, 12, 32, 0.55);
-        --glass-border: rgba(200, 210, 255, 0.25);
-      }
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
 
-      * {
-        box-sizing: border-box;
-        -webkit-tap-highlight-color: transparent;
-      }
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: #0a0c20;
+  color: var(--text-main);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
 
-      html,
-      body {
-        margin: 0;
-        padding: 0;
-        min-height: 100%;
-        font-family: "Inter", sans-serif;
-        background: #0a0c20;
-        color: var(--text-main);
-        overflow-x: hidden;
-      }
+/* ------------------------- */
+/* APP WRAPPER */
+/* ------------------------- */
 
-      body {
-        padding: 1.5rem 0.75rem 2.5rem;
-      }
+.app-shell {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1rem;
+  border-radius: 36px;
+  background: rgba(15,18,42,0.85);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.45);
+}
 
-      /* ------------------------------
-         APP WRAPPER
-      ------------------------------ */
+/* ------------------------- */
+/* HEADER */
+/* ------------------------- */
 
-      .app-shell {
-        width: 100%;
-        max-width: 480px;
-        margin: 0 auto;
-        border-radius: 36px;
-        padding: 1rem;
-        background: rgba(15, 18, 42, 0.85);
-        backdrop-filter: blur(6px);
-        box-shadow: var(--shadow-soft);
-      }
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 
-      /* ------------------------------
-         HEADER
-      ------------------------------ */
+/* Hamburger button */
+.hamburger {
+  width: 32px;
+  height: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+}
 
-      .top-bar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
+.hamburger .bar {
+  width: 100%;
+  height: 4px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #bfa8ff, #71c5ff);
+  box-shadow: 0 0 8px #71c5ff;
+}
 
-      /* Hamburger Icon */
-      .hamburger {
-        width: 28px;
-        height: 22px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        cursor: pointer;
-      }
+.logo-title {
+  flex: 1;
+  text-align: center;
+  font-family: "Playfair Display", serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 1rem;
+  margin-right: 18px;
+}
 
-      .bar {
-        width: 100%;
-        height: 3px;
-        background: var(--accent-blue);
-        border-radius: 3px;
-        box-shadow: 0 0 8px var(--accent-blue);
-      }
+/* ------------------------- */
+/* FULL SCREEN MENU */
+/* ------------------------- */
 
-      /* Header Logo */
-      .logo-cluster {
-        text-align: center;
-        flex: 1;
-      }
+.menu-overlay {
+  position: fixed;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(16px);
+  background: rgba(10,12,32,0.55);
+  transition: left .35s ease;
+  z-index: 999;
+  padding: 1.5rem;
+}
 
-      .bca-logo-text-long {
-        font-family: "Playfair Display", serif;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        font-size: 1rem;
-      }
+.menu-overlay.active {
+  left: 0;
+}
 
-      /* ------------------------------
-         FULL SCREEN SLIDING MENU
-      ------------------------------ */
+.menu-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(8px);
+  font-size: 1.5rem;
+  color: white;
+}
 
-      .menu-overlay {
-        position: fixed;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        backdrop-filter: blur(16px);
-        background: rgba(10, 12, 32, 0.55);
-        border-right: 1px solid var(--glass-border);
-        transition: left 0.35s ease;
-        z-index: 999;
-        display: flex;
-        flex-direction: column;
-        padding: 1.5rem;
-      }
+.menu-title {
+  margin-top: 3.5rem;
+  text-align: center;
+  font-family: "Playfair Display", serif;
+  font-size: 1.4rem;
+  color: white;
+  text-shadow: 0 0 10px var(--accent-blue);
+  letter-spacing: 0.06em;
+}
 
-      .menu-overlay.active {
-        left: 0;
-      }
+/* Menu items */
+.menu-items {
+  margin-top: 4rem;
+  text-align: center;
+}
 
-      /* X button (top-right) */
-      .menu-close {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        font-size: 1.5rem;
-        color: white;
-        background: rgba(255, 255, 255, 0.15);
-        border: none;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        cursor: pointer;
-        backdrop-filter: blur(8px);
-      }
+.menu-item {
+  font-family: "Playfair Display", serif;
+  font-size: 1.8rem;
+  margin: 1.35rem 0;
+  color: #dcd0ff; /* light pretty lavender */
+  text-shadow: 0 0 10px var(--accent-blue);
+  cursor: pointer;
+  position: relative;
+  letter-spacing: 0.07em;
+}
 
-      /* Menu Items */
-      .menu-items {
-        margin-top: 6rem;
-        text-align: center;
-      }
+.menu-item::after {
+  content: "";
+  display: block;
+  width: 60%;
+  height: 2px; /* U2 thin underline */
+  margin: 0.35rem auto 0;
+  background: var(--underline-gradient);
+  border-radius: 2px;
+  opacity: 0.9;
+}
 
-      .menu-item {
-        font-family: "Playfair Display", serif;
-        font-size: 1.8rem;
-        margin: 1.2rem 0;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: white;
-        text-shadow: 0 0 12px var(--accent-blue);
-        cursor: pointer;
-      }
+/* ------------------------- */
+/* PAGE CARD */
+/* ------------------------- */
 
-      /* ------------------------------
-         CARD / LAYOUT
-      ------------------------------ */
+.card {
+  margin-top: 1rem;
+  padding: 1.3rem 1.2rem;
+  background: rgba(18,20,45,0.6);
+  border-radius: 24px;
+  border: 1px solid rgba(140,155,255,0.25);
+  backdrop-filter: blur(4px);
+}
 
-      .card {
-        margin-top: 1rem;
-        padding: 1rem 1.1rem;
-        border-radius: 24px;
-        background: rgba(18, 20, 45, 0.7);
-        border: 1px solid rgba(120, 140, 255, 0.25);
-        backdrop-filter: blur(4px);
-      }
+/* ------------------------- */
+/* PAGE TITLES */
+/* ------------------------- */
 
-      .app-title {
-        font-family: "Playfair Display", serif;
-        font-size: 1.4rem;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        margin: 0;
-      }
+.page-title {
+  font-family: "Playfair Display", serif;
+  font-size: 1.4rem;
+  margin: 0;
+  padding-bottom: 0.35rem;
+  position: relative;
+  text-shadow: 0 0 10px var(--accent-blue);
+  letter-spacing: 0.03em;
+}
 
-      .app-subtitle {
-        margin: 0.3rem 0 0.2rem;
-        color: var(--accent-soft);
-        font-size: 0.9rem;
-      }
+.page-title::after {
+  /* U2 thin underline */
+  content: "";
+  display: block;
+  width: 55%;
+  height: 2px;
+  background: var(--underline-gradient);
+  border-radius: 2px;
+  margin-top: 0.35rem;
+}
 
-      .app-tagline {
-        margin: 0.4rem 0;
-        color: var(--text-muted);
-        font-size: 0.75rem;
-      }
+/* ------------------------- */
+/* VIEWS */
+/* ------------------------- */
 
-      .view {
-        display: none;
-      }
+.view { display: none; }
+.view.active { display: block; }
 
-      .view.active {
-        display: block;
-      }
+.view-description {
+  margin: .6rem 0 1rem;
+  color: var(--text-muted);
+  font-size: .8rem;
+}
 
-      /* Buttons */
-      .primary-pill {
-        background: linear-gradient(135deg, #bfa8ff, #71c5ff);
-        color: #06061a;
-        font-weight: 600;
-        padding: 0.5rem 1rem;
-        border-radius: 999px;
-        border: none;
-        cursor: pointer;
-      }
+/* ------------------------- */
+/* BUTTONS */
+/* ------------------------- */
 
-      .ghost-pill {
-        border-radius: 999px;
-        background: transparent;
-        color: var(--accent-soft);
-        border: 1px solid rgba(165, 177, 255, 0.45);
-        padding: 0.45rem 1rem;
-      }
+.primary-pill {
+  background: linear-gradient(135deg, #bfa8ff, #71c5ff);
+  color: #06061a;
+  padding: 0.55rem 1.2rem;
+  border-radius: 999px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: .6rem;
+}
 
-      /* TABLE */
-      .table-wrapper {
-        margin-top: 0.75rem;
-        border-radius: 16px;
-        padding: 0.6rem;
-        background: rgba(20, 22, 50, 0.6);
-        border: 1px solid rgba(140, 155, 255, 0.25);
-      }
+.ghost-pill {
+  background: transparent;
+  border: 1px solid rgba(165, 177, 255, 0.5);
+  color: var(--accent-soft);
+  padding: 0.55rem 1.2rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
 
-      table {
-        width: 100%;
-        color: var(--text-main);
-        border-collapse: collapse;
-        font-size: 0.75rem;
-      }
+/* ------------------------- */
+/* TABLE + CARDS */
+/* ------------------------- */
 
-      thead {
-        color: var(--text-muted);
-        font-size: 0.7rem;
-      }
+.table-wrapper {
+  margin-top: 1rem;
+  padding: .8rem;
+  background: rgba(20,22,50,0.55);
+  border: 1px solid rgba(140,155,255,0.25);
+  border-radius: 16px;
+}
 
-      td {
-        padding: 0.35rem 0.3rem;
-        border-top: 1px solid rgba(55, 70, 120, 0.4);
-      }
+table {
+  width: 100%;
+  font-size: .75rem;
+  color: var(--text-main);
+  border-collapse: collapse;
+}
 
-      .token-pnl-positive {
-        color: var(--success);
-      }
-      .token-pnl-negative {
-        color: var(--danger);
-      }
+td {
+  padding: .35rem 0;
+  border-top: 1px solid rgba(60,70,120,0.5);
+}
 
-      .row-actions button {
-        background: none;
-        border: none;
-        color: #ddd;
-        cursor: pointer;
-      }
+.token-pnl-positive { color: #5dd9a3; }
+.token-pnl-negative { color: #ff5c8a; }
 
-      /* TOT CARDS */
-      .tot-card {
-        background: rgba(20, 22, 45, 0.6);
-        border: 1px solid rgba(140, 155, 255, 0.3);
-        border-radius: 16px;
-        padding: 0.7rem;
-        margin-bottom: 0.6rem;
-      }
+@media (max-width: 600px) {
+  table thead { display: none; }
+  table td { display: block; border-top: none; }
+  table tr { border-top: 1px solid rgba(60,70,120,0.45); margin-bottom:.6rem; }
+}
 
-      /* MOBILE RESPONSIVE */
-      @media (max-width: 600px) {
-        table thead {
-          display: none;
-        }
-        table td {
-          display: block;
-          padding: 0.2rem 0;
-          border-top: none;
-        }
-        table tr {
-          border-top: 1px solid rgba(60, 70, 120, 0.5);
-          margin-bottom: 0.5rem;
-        }
-      }
-    </style>
-  </head>
+/* TOT cards */
+.tot-card {
+  background: rgba(20,22,45,0.6);
+  border: 1px solid rgba(140,155,255,0.3);
+  border-radius: 16px;
+  padding: .75rem;
+  margin-bottom: .6rem;
+}
+</style>
+</head>
 
-  <body>
-    <!-- MENU OVERLAY -->
-    <div class="menu-overlay" id="menuOverlay">
-      <button class="menu-close" id="menuClose">×</button>
+<body>
 
-      <div class="menu-items">
-        <div class="menu-item" data-view="tot">TOT Crypto</div>
-        <div class="menu-item" data-view="tracker">Tracker</div>
+<!-- ================================ -->
+<!-- FULL SCREEN MENU -->
+<!-- ================================ -->
+<div class="menu-overlay" id="menuOverlay">
+
+  <button class="menu-close" id="menuClose">×</button>
+
+  <div class="menu-title">Menu</div>
+
+  <div class="menu-items">
+    <div class="menu-item" data-view="overview">Overview</div>
+    <div class="menu-item" data-view="tracking">Tracker</div>
+  </div>
+</div>
+
+<!-- ================================ -->
+<!-- APP SHELL -->
+<!-- ================================ -->
+<div class="app-shell">
+
+  <!-- HEADER -->
+  <header class="top-bar">
+    <div class="hamburger" id="hamburger">
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+    </div>
+
+    <div class="logo-title">Burke Crypto Analytics</div>
+  </header>
+
+  <!-- CARD WRAPPER -->
+  <main class="card">
+
+    <!-- OVERVIEW VIEW -->
+    <section class="view active" id="overviewView">
+      <h2 class="page-title">Overview</h2>
+
+      <p class="view-description">
+        Your total crypto summary — soft, calm, and clear.
+      </p>
+
+      <div id="totSummary"></div>
+      <div id="totCards"></div>
+    </section>
+
+    <!-- TRACKING VIEW -->
+    <section class="view" id="trackingView">
+      <h2 class="page-title">Tracking</h2>
+
+      <p class="view-description">
+        Add tokens, lock entries, and track your coins effortlessly.
+      </p>
+
+      <button id="addTokenBtn" class="primary-pill">Add token</button>
+      <button id="refreshPricesBtn" class="ghost-pill">Refresh prices</button>
+
+      <div class="table-wrapper">
+        <table>
+          <tbody id="tokenTableBody"></tbody>
+        </table>
+        <p id="emptyState">No tokens yet.</p>
       </div>
-    </div>
+    </section>
 
-    <div class="app-shell">
-      <header class="top-bar">
-        <!-- Hamburger -->
-        <div class="hamburger" id="hamburger">
-          <div class="bar"></div>
-          <div class="bar"></div>
-          <div class="bar"></div>
-        </div>
+  </main>
+</div>
 
-        <div class="logo-cluster">
-          <div class="bca-logo-text-long">Burke Crypto Analytics</div>
-        </div>
-      </header>
+<script>
+/* ================================ */
+/* MENU INTERACTION */
+/* ================================ */
 
-      <main class="card">
-        <section class="card-hero">
-          <h1 class="app-title">Burke Crypto Analytics</h1>
-          <p class="app-subtitle">Calm, clear tracking for your crypto.</p>
-          <p class="app-tagline">
-            Just because the market is chaos doesn’t mean your dashboard has to
-            be.
-          </p>
-        </section>
+const hamburger = document.getElementById("hamburger");
+const menuOverlay = document.getElementById("menuOverlay");
+const menuClose = document.getElementById("menuClose");
 
-        <!-- TRACKER VIEW -->
-        <section class="view" id="trackerView">
-          <p class="view-description">
-            Add coins, track entries, and watch your portfolio glow.
-          </p>
+hamburger.addEventListener("click", () => {
+  menuOverlay.classList.add("active");
+});
 
-          <div class="tracker-controls">
-            <button id="addTokenBtn" class="primary-pill">Add token</button>
-            <button id="refreshPricesBtn" class="ghost-pill">
-              Refresh prices
-            </button>
-          </div>
+menuClose.addEventListener("click", () => {
+  menuOverlay.classList.remove("active");
+});
 
-          <div id="tokenFormPanel" class="token-form-panel hidden">
-            <!-- form created later if you want -->
-          </div>
+document.querySelectorAll(".menu-item").forEach(item => {
+  item.addEventListener("click", () => {
+    const view = item.dataset.view;
+    showView(view);
+    menuOverlay.classList.remove("active");
+  });
+});
 
-          <div class="table-wrapper">
-            <table>
-              <tbody id="tokenTableBody"></tbody>
-            </table>
-            <p id="emptyState">No tokens yet.</p>
-          </div>
-        </section>
+/* ================================ */
+/* VIEW SWITCHING */
+/* ================================ */
 
-        <!-- TOT VIEW -->
-        <section class="view active" id="totView">
-          <p class="view-description">
-            Your total crypto overview — simple, soft, and calm.
-          </p>
+function showView(v) {
+  document.querySelectorAll(".view").forEach(sec =>
+    sec.classList.remove("active")
+  );
+  document.getElementById(v + "View").classList.add("active");
+}
 
-          <div id="totSummary"></div>
-          <div id="totCards"></div>
-        </section>
-      </main>
-    </div>
+/* Default: Overview */
+showView("overview");
 
-    <script>
-      /* ----------------------------
-         MENU LOGIC
-      ---------------------------- */
-      const menuOverlay = document.getElementById("menuOverlay");
-      const hamburger = document.getElementById("hamburger");
-      const menuClose = document.getElementById("menuClose");
+/* ================================ */
+/* (YOU CAN ADD YOUR TRACKER LOGIC HERE LATER) */
+/* ================================ */
 
-      hamburger.addEventListener("click", () => {
-        menuOverlay.classList.add("active");
-      });
+</script>
 
-      menuClose.addEventListener("click", () => {
-        menuOverlay.classList.remove("active");
-      });
-
-      document.querySelectorAll(".menu-item").forEach((item) => {
-        item.addEventListener("click", () => {
-          const view = item.dataset.view;
-          showView(view);
-          menuOverlay.classList.remove("active");
-        });
-      });
-
-      /* ----------------------------
-         VIEW SWITCHING
-      ---------------------------- */
-      function showView(view) {
-        document.querySelectorAll(".view").forEach((v) =>
-          v.classList.remove("active")
-        );
-        document.getElementById(view + "View").classList.add("active");
-      }
-
-      // Default to TOT
-      showView("tot");
-    </script>
-  </body>
+</body>
 </html>
