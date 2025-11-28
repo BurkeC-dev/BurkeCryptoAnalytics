@@ -2,19 +2,292 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
-
     <title>Burke Crypto Analytics</title>
-
-    <!-- PWA: theme color & manifest -->
-    <meta name="theme-color" content="#111827" />
-    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <div class="app-shell">
+      <header class="top-bar">
+        <button class="menu-toggle" id="menuToggle">Menu</button>
+
+        <div class="logo-cluster">
+          <div class="bca-logo-mark">
+            <span class="bca-logo-text-short">BCA</span>
+          </div>
+          <div class="bca-logo-text-long">
+            Burke Crypto Analytics
+          </div>
+        </div>
+
+        <div class="tab-toggle collapsed" id="tabToggle">
+          <button class="tab-btn active" data-view="tracker">
+            <span class="icon-wrapper">
+              <!-- Tracker icon: soft crescent/graph coin -->
+              <svg
+                class="icon-svg tracker-icon"
+                viewBox="0 0 64 64"
+                aria-hidden="true"
+              >
+                <defs>
+                  <linearGradient id="trackerGradient" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#bfa8ff" />
+                    <stop offset="100%" stop-color="#71c5ff" />
+                  </linearGradient>
+                </defs>
+                <circle
+                  cx="32"
+                  cy="32"
+                  r="28"
+                  fill="url(#trackerGradient)"
+                  stroke="#e4e6ff"
+                  stroke-width="2"
+                />
+                <!-- small crescent -->
+                <path
+                  d="M22 23c4-6 11-8 18-5-4 2-6 6-6 10 0 4 2 8 6 10-7 3-14 1-18-5-2-3-2-7 0-10z"
+                  fill="rgba(10,12,40,0.25)"
+                />
+                <!-- simple line chart -->
+                <polyline
+                  points="18,40 26,34 33,37 42,26 48,30"
+                  fill="none"
+                  stroke="#101324"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span class="tab-label">Tracker</span>
+          </button>
+
+          <button class="tab-btn" data-view="tot">
+            <span class="icon-wrapper">
+              <!-- TOT Crypto TC coin icon -->
+              <svg
+                class="icon-svg tc-icon"
+                viewBox="0 0 64 64"
+                aria-hidden="true"
+              >
+                <defs>
+                  <radialGradient id="tcGradient" cx="30%" cy="20%" r="80%">
+                    <stop offset="0%" stop-color="#e6d6ff" />
+                    <stop offset="45%" stop-color="#bfa8ff" />
+                    <stop offset="100%" stop-color="#71c5ff" />
+                  </radialGradient>
+                </defs>
+                <circle
+                  cx="32"
+                  cy="32"
+                  r="29"
+                  fill="#0c0f2a"
+                  opacity="0.7"
+                />
+                <circle
+                  cx="32"
+                  cy="32"
+                  r="24"
+                  fill="url(#tcGradient)"
+                  stroke="#f3f3ff"
+                  stroke-width="1.5"
+                />
+                <!-- soft halo -->
+                <circle
+                  cx="32"
+                  cy="32"
+                  r="24"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.35)"
+                  stroke-width="2"
+                />
+                <!-- TC letters with glow (Option G) -->
+                <g filter="url(#glow)">
+                  <text
+                    x="22"
+                    y="36"
+                    font-family="Playfair Display, 'Times New Roman', serif"
+                    font-size="14"
+                    fill="#ffffff"
+                  >
+                    T
+                  </text>
+                  <text
+                    x="33"
+                    y="36"
+                    font-family="Playfair Display, 'Times New Roman', serif"
+                    font-size="14"
+                    fill="#ffffff"
+                  >
+                    ₵
+                  </text>
+                </g>
+                <!-- simple inner glow via duplicate faint text -->
+                <text
+                  x="22"
+                  y="36"
+                  font-family="Playfair Display, 'Times New Roman', serif"
+                  font-size="14"
+                  fill="rgba(255,255,255,0.45)"
+                >
+                  T
+                </text>
+                <text
+                  x="33"
+                  y="36"
+                  font-family="Playfair Display, 'Times New Roman', serif"
+                  font-size="14"
+                  fill="rgba(255,255,255,0.45)"
+                >
+                  ₵
+                </text>
+              </svg>
+            </span>
+            <span class="tab-label">TOT Crypto</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="card">
+        <section class="card-hero">
+          <h1 class="app-title">Burke Crypto Analytics</h1>
+          <p class="app-subtitle">Calm, clear tracking for your crypto.</p>
+          <p class="app-tagline">
+            Just because the market is chaos doesn&rsquo;t mean your dashboard
+            has to be.
+          </p>
+        </section>
+
+        <!-- TRACKER VIEW -->
+        <section class="view view-tracker active" id="trackerView">
+          <p class="view-description">
+            Use tracker view to add coins, lock in your entry, and let Burke
+            Crypto Analytics do the soft-goth math for you.
+          </p>
+
+          <div class="tracker-controls">
+            <button id="addTokenBtn" class="primary-pill">
+              Add token
+            </button>
+            <button id="refreshPricesBtn" class="ghost-pill">
+              Refresh prices
+            </button>
+          </div>
+
+          <div id="tokenFormPanel" class="token-form-panel hidden">
+            <div class="token-form-header">
+              <div>
+                <span class="token-form-title">New token entry</span>
+                <span class="token-form-subtitle">
+                  Choose a coin, set your entry, we&rsquo;ll track the rest.
+                </span>
+              </div>
+              <button id="closeFormBtn" class="close-form-btn" aria-label="Close">
+                ×
+              </button>
+            </div>
+
+            <form id="tokenForm" autocomplete="off">
+              <div class="field">
+                <label for="quickSelect">Quick coin select</label>
+                <select id="quickSelect">
+                  <option value="">Choose a popular coin…</option>
+                </select>
+                <small class="hint">
+                  This list comes from CoinGecko. For degen/tiny tokens, you can
+                  type your own name &amp; ticker below.
+                </small>
+              </div>
+
+              <div class="field">
+                <label for="coinName">Name of coin</label>
+                <input id="coinName" type="text" placeholder="Bitcoin" required />
+              </div>
+
+              <div class="field">
+                <label for="coinSymbol">Symbol / ticker</label>
+                <input id="coinSymbol" type="text" placeholder="BTC" required />
+              </div>
+
+              <div class="field field-inline">
+                <div>
+                  <label for="buyPrice">Your buy price (per coin, USD)</label>
+                  <input
+                    id="buyPrice"
+                    type="number"
+                    step="0.00000001"
+                    min="0"
+                    placeholder="42000"
+                    required
+                  />
+                </div>
+                <div>
+                  <label for="amountHeld">Amount of coin</label>
+                  <input
+                    id="amountHeld"
+                    type="number"
+                    step="0.00000001"
+                    min="0"
+                    placeholder="0.25"
+                    required
+                  />
+                </div>
+              </div>
+
+              <button type="submit" class="primary-pill wide">
+                Save token
+              </button>
+            </form>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="token-table" id="tokenTable">
+              <thead>
+                <tr>
+                  <th>Coin</th>
+                  <th>Entry</th>
+                  <th>Amount</th>
+                  <th>Cost</th>
+                  <th>Last price</th>
+                  <th>Value</th>
+                  <th>P/L</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tokenTableBody">
+                <!-- rows injected by JS -->
+              </tbody>
+            </table>
+            <p class="empty-state" id="emptyState">
+              No tokens yet. Tap <strong>Add token</strong> to start tracking.
+            </p>
+          </div>
+        </section>
+
+        <!-- TOT CRYPTO / WALLET VIEW -->
+        <section class="view view-tot" id="totView">
+          <p class="view-description">
+            TOT Crypto shows your overall exposure – a soft summary of your
+            chaos.
+          </p>
+
+          <div class="tot-summary" id="totSummary">
+            <!-- totals injected by JS -->
+          </div>
+
+          <div class="tot-cards" id="totCards">
+            <!-- cards injected by JS -->
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="script.js"></script>
   </body>
 </html>
