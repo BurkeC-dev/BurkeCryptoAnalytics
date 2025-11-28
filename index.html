@@ -547,12 +547,16 @@ tokenFormClose.addEventListener("click", () => {
 });
 
 /* Quick select handler */
-quickCoinSelect.addEventListener("change", (e) => {
-  const value = e.target.value;
-  if (!value) return;
-  const [id, sym, name] = value.split("|");
-  coinNameInput.value = name;
-  coinSymbolInput.value = sym;
+<select id="quickCoinSelect" class="token-select">
+  <option value="">Choose a popular coin…</option>
+  <option value="bitcoin|BTC|Bitcoin">Bitcoin (BTC)</option>
+  <option value="ethereum|ETH|Ethereum">Ethereum (ETH)</option>
+  <option value="solana|SOL|Solana">Solana (SOL)</option>
+  <option value="ripple|XRP|XRP">XRP (XRP)</option>
+  <option value="dogecoin|DOGE|Dogecoin">Dogecoin (DOGE)</option>
+  <option value="cardano|ADA|Cardano">Cardano (ADA)</option>
+</select>
+
   // Optionally prefill buy price later with live price.
 });
 
