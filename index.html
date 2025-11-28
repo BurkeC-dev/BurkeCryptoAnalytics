@@ -18,14 +18,14 @@
   --text-muted: #a9b0d6;
 }
 
-/* Softer glow */
+/* SOFT GLOW (G-Med but toned down) */
 .soft-glow {
   text-shadow:
     0 0 2px var(--blue),
     0 0 6px rgba(113,197,255,0.7);
 }
 
-/* Down-glow underline */
+/* DOWN-GLOW UNDERLINE */
 .underline-soft {
   position: relative;
 }
@@ -37,7 +37,7 @@
   margin-top: 0.3rem;
   background: var(--lavender);
   border-radius: 1px;
-  box-shadow: 0 3px 6px rgba(113,197,255,0.6); /* down, softer */
+  box-shadow: 0 3px 6px rgba(113,197,255,0.6);
 }
 
 /* RESET */
@@ -118,20 +118,25 @@ html, body {
 .menu-overlay.active {
   left: 0;
 }
+
+/* ❌ NEW GLOWING X BUTTON */
 .menu-close {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.15);
-  backdrop-filter: blur(8px);
+  background: none;
   border: none;
-  font-size: 1.5rem;
-  color: white;
   cursor: pointer;
+  padding: 0;
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--lavender);
+  text-shadow:
+    0 0 2px var(--blue),
+    0 0 6px rgba(113,197,255,0.7),
+    0 0 10px rgba(113,197,255,0.5);
 }
+
 .menu-title {
   margin-top: 3.5rem;
   text-align: center;
@@ -139,11 +144,9 @@ html, body {
   font-size: 1.4rem;
   color: var(--lavender);
 }
-.menu-title.soft-glow {
-  text-shadow:
-    0 0 2px var(--blue),
-    0 0 6px rgba(113,197,255,0.7);
-}
+.menu-title.soft-glow {}
+
+/* MENU ITEMS */
 .menu-items {
   margin-top: 3.5rem;
   text-align: center;
@@ -155,8 +158,6 @@ html, body {
   color: var(--lavender);
   letter-spacing: 0.06em;
   cursor: pointer;
-}
-.menu-item.soft-glow {
   text-shadow:
     0 0 2px var(--blue),
     0 0 6px rgba(113,197,255,0.7);
@@ -189,14 +190,18 @@ html, body {
   display: block;
 }
 
-/* PAGE TITLE */
+/* PAGE TITLES */
 .page-title {
   font-family: "Playfair Display", serif;
   font-size: 1.4rem;
   color: var(--lavender);
   margin: 0;
   letter-spacing: 0.03em;
+  text-shadow:
+    0 0 2px var(--blue),
+    0 0 6px rgba(113,197,255,0.7);
 }
+
 .view-description {
   margin: .6rem 0 1rem;
   color: var(--text-muted);
@@ -226,7 +231,7 @@ html, body {
   cursor: pointer;
 }
 
-/* TABLE AREA */
+/* TRACKING TABLE */
 .table-wrapper {
   margin-top: 1rem;
   padding: .8rem;
@@ -253,7 +258,6 @@ td {
   }
 }
 
-/* TOT cards (for later when we wire Overview data) */
 .tot-card {
   background: rgba(20,22,45,0.9);
   border: 1px solid rgba(140,155,255,0.35);
@@ -269,11 +273,12 @@ td {
 <!-- MENU OVERLAY -->
 <div class="menu-overlay" id="menuOverlay">
   <button class="menu-close" id="menuClose">×</button>
+
   <div class="menu-title soft-glow">Menu</div>
 
   <div class="menu-items">
-    <div class="menu-item soft-glow" data-view="overview">Overview</div>
-    <div class="menu-item soft-glow" data-view="tracking">Tracker</div>
+    <div class="menu-item" data-view="overview">Overview</div>
+    <div class="menu-item" data-view="tracking">Tracker</div>
   </div>
 </div>
 
@@ -291,7 +296,7 @@ td {
 
     <!-- OVERVIEW PAGE -->
     <section class="page-view" id="overviewView">
-      <h2 class="page-title underline-soft soft-glow">Overview</h2>
+      <h2 class="page-title underline-soft">Overview</h2>
       <p class="view-description">
         Your total crypto summary — soft, calm, and clear.
       </p>
@@ -301,7 +306,7 @@ td {
 
     <!-- TRACKING PAGE -->
     <section class="page-view" id="trackingView">
-      <h2 class="page-title underline-soft soft-glow">Tracking</h2>
+      <h2 class="page-title underline-soft">Tracking</h2>
       <p class="view-description">
         Add tokens, lock entries, and track your coins effortlessly.
       </p>
@@ -341,16 +346,15 @@ document.querySelectorAll(".menu-item").forEach(item => {
   });
 });
 
-/* VIEW SWITCHING (Overview vs Tracking) */
+/* VIEW SWITCHING */
 function showView(viewName) {
   document.querySelectorAll(".page-view").forEach(sec =>
     sec.classList.remove("active")
   );
-  const target = document.getElementById(viewName + "View");
-  if (target) target.classList.add("active");
+  document.getElementById(viewName + "View").classList.add("active");
 }
 
-/* Default to Overview page */
+/* Default Page = Overview */
 showView("overview");
 </script>
 
