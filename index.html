@@ -1,678 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Burke Crypto Analytics</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-
-<!-- FONTS -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
-
-<style>
-:root {
-  --lavender: #dcd0ff;
-  --blue: #71c5ff;
-  --text-main: #f6f3ff;
-  --text-muted: #a9b0d6;
-  --success: #5dd9a3;
-  --danger: #ff5c8a;
-}
-
-/* SOFT GLOW */
-.soft-glow {
-  text-shadow:
-    0 0 2px var(--blue),
-    0 0 6px rgba(113,197,255,0.7);
-}
-
-/* DOWN-GLOW UNDERLINE */
-.underline-soft {
-  position: relative;
-}
-.underline-soft::after {
-  content: "";
-  display: block;
-  width: 45%;
-  height: 1px;
-  margin-top: 0.3rem;
-  background: var(--lavender);
-  border-radius: 1px;
-  box-shadow: 0 3px 6px rgba(113,197,255,0.6);
-}
-
-/* HIDDEN UTILITY */
-.hidden {
-  display: none;
-}
-
-/* RESET */
-* {
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
-}
-html, body {
-  margin: 0;
-  padding: 0;
-  min-height: 100%;
-  background: #050716;
-  color: var(--text-main);
-  font-family: 'Inter', sans-serif;
-  overflow-x: hidden;
-}
-
-/* APP SHELL */
-.app-shell {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 1rem;
-  background: rgba(15,18,42,0.9);
-  backdrop-filter: blur(8px);
-  border-radius: 36px;
-  box-shadow: 0 24px 80px rgba(0,0,0,0.45);
-}
-
-/* HEADER */
-.top-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-/* HAMBURGER */
-.hamburger {
-  width: 32px;
-  height: 24px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  cursor: pointer;
-}
-.hamburger .bar {
-  width: 100%;
-  height: 4px;
-  border-radius: 4px;
-  background: linear-gradient(90deg, #bfa8ff, #71c5ff);
-  box-shadow:
-    0 0 3px var(--blue),
-    0 0 7px rgba(113,197,255,0.8);
-}
-
-.logo-title {
-  flex: 1;
-  text-align: center;
-  font-family: "Playfair Display", serif;
-  font-size: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  margin-right: 18px;
-}
-
-/* FULL SCREEN MENU */
-.menu-overlay {
-  position: fixed;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  backdrop-filter: blur(20px);
-  background: rgba(10,12,32,0.65);
-  transition: left .35s ease;
-  z-index: 999;
-  padding: 1.5rem;
-}
-.menu-overlay.active {
-  left: 0;
-}
-
-/* Glowing X */
-.menu-close {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  font-size: 2rem;
-  line-height: 1;
-  color: var(--lavender);
-  text-shadow:
-    0 0 2px var(--blue),
-    0 0 6px rgba(113,197,255,0.7),
-    0 0 10px rgba(113,197,255,0.5);
-}
-
-.menu-title {
-  margin-top: 3.5rem;
-  text-align: center;
-  font-family: "Playfair Display", serif;
-  font-size: 1.4rem;
-  color: var(--lavender);
-}
-
-/* MENU ITEMS */
-.menu-items {
-  margin-top: 3.5rem;
-  text-align: center;
-}
-.menu-item {
-  font-family: "Playfair Display", serif;
-  font-size: 1.8rem;
-  margin: 1.5rem 0;
-  color: var(--lavender);
-  letter-spacing: 0.06em;
-  cursor: pointer;
-  text-shadow:
-    0 0 2px var(--blue),
-    0 0 6px rgba(113,197,255,0.7);
-}
-.menu-item::after {
-  content: "";
-  display: block;
-  width: 55%;
-  height: 1px;
-  background: var(--lavender);
-  border-radius: 1px;
-  margin: 0.35rem auto 0;
-  box-shadow: 0 3px 6px rgba(113,197,255,0.6);
-}
-
-/* CARD */
-.card {
-  margin-top: 1rem;
-  padding: 1.3rem 1.2rem;
-  background: rgba(12,14,35,0.95);
-  border-radius: 24px;
-  border: 1px solid rgba(140,155,255,0.3);
-}
-
-/* PAGE VIEWS */
-.page-view {
-  display: none;
-}
-.page-view.active {
-  display: block;
-}
-
-/* PAGE TITLES */
-.page-title {
-  font-family: "Playfair Display", serif;
-  font-size: 1.4rem;
-  color: var(--lavender);
-  margin: 0;
-  letter-spacing: 0.03em;
-  text-shadow:
-    0 0 2px var(--blue),
-    0 0 6px rgba(113,197,255,0.7);
-}
-
-.view-description {
-  margin: .6rem 0 1rem;
-  color: var(--text-muted);
-  font-size: .8rem;
-}
-
-/* BUTTONS */
-.primary-pill {
-  background: linear-gradient(135deg, #bfa8ff, #71c5ff);
-  color: #06061a;
-  padding: 0.55rem 1.2rem;
-  border-radius: 999px;
-  border: none;
-  font-weight: 600;
-  cursor: pointer;
-  margin-right: .6rem;
-  box-shadow:
-    0 0 3px var(--blue),
-    0 0 7px rgba(113,197,255,0.8);
-}
-.ghost-pill {
-  background: transparent;
-  border: 1px solid rgba(165, 177, 255, 0.5);
-  color: var(--lavender);
-  padding: 0.55rem 1.2rem;
-  border-radius: 999px;
-  cursor: pointer;
-}
-
-/* TOKEN FORM PANEL */
-.token-form {
-  margin-top: 1rem;
-  padding: 1rem;
-  background: rgba(16,18,45,0.95);
-  border-radius: 18px;
-  border: 1px solid rgba(140,155,255,0.45);
-  position: relative;
-}
-
-.token-form-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.4rem;
-}
-
-.token-form-title {
-  font-family: "Playfair Display", serif;
-  font-size: 1rem;
-  color: var(--lavender);
-}
-
-.token-form-close {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1.4rem;
-  line-height: 1;
-  color: var(--lavender);
-  text-shadow:
-    0 0 2px var(--blue),
-    0 0 6px rgba(113,197,255,0.7);
-}
-
-.token-form-subtext {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin-bottom: 0.7rem;
-}
-
-/* FORM ELEMENTS */
-.form-row {
-  margin-bottom: 0.6rem;
-}
-.form-label {
-  display: block;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin-bottom: 0.2rem;
-}
-
-.token-input,
-.token-select {
-  width: 100%;
-  border-radius: 999px;
-  border: 1px solid rgba(140,155,255,0.5);
-  background: rgba(10,12,35,0.95);
-  color: var(--text-main);
-  padding: 0.5rem 0.8rem;
-  font-size: 0.8rem;
-  font-family: inherit;
-}
-
-.token-input::placeholder {
-  color: rgba(169,176,214,0.7);
-}
-
-/* TABLE AREA */
-.table-wrapper {
-  margin-top: 1rem;
-  padding: .8rem;
-  background: rgba(16,18,45,0.95);
-  border-radius: 16px;
-  border: 1px solid rgba(140,155,255,0.3);
-}
-table {
-  width: 100%;
-  font-size: .75rem;
-  color: var(--text-main);
-  border-collapse: collapse;
-}
-td {
-  padding: .35rem 0;
-  border-top: 1px solid rgba(60,70,120,0.5);
-}
-@media (max-width: 600px) {
-  table thead { display: none; }
-  table td { display: block; border-top: none; }
-  table tr {
-    border-top: 1px solid rgba(60,70,120,0.45);
-    margin-bottom: .6rem;
-  }
-}
-
-.token-name {
-  font-weight: 600;
-}
-.token-meta {
-  color: var(--text-muted);
-  font-size: 0.72rem;
-}
-.token-pnl-positive {
-  color: var(--success);
-}
-.token-pnl-negative {
-  color: var(--danger);
-}
-
-/* TOT cards (for later) */
-.tot-card {
-  background: rgba(20,22,45,0.9);
-  border: 1px solid rgba(140,155,255,0.35);
-  border-radius: 16px;
-  padding: .75rem;
-  margin-bottom: .6rem;
-}
-</style>
-</head>
-
-<body>
-
-<!-- MENU OVERLAY -->
-<div class="menu-overlay" id="menuOverlay">
-  <button class="menu-close" id="menuClose">×</button>
-
-  <div class="menu-title soft-glow">Menu</div>
-
-  <div class="menu-items">
-    <div class="menu-item" data-view="overview">Overview</div>
-    <div class="menu-item" data-view="tracking">Tracker</div>
-  </div>
-</div>
-
-<div class="app-shell">
-  <header class="top-bar">
-    <div class="hamburger" id="hamburger">
-      <div class="bar"></div>
-      <div class="bar"></div>
-      <div class="bar"></div>
-    </div>
-    <div class="logo-title">Burke Crypto Analytics</div>
-  </header>
-
-  <main class="card">
-
-    <!-- OVERVIEW PAGE -->
-    <section class="page-view" id="overviewView">
-      <h2 class="page-title underline-soft">Overview</h2>
-      <p class="view-description">
-        Your total crypto summary — soft, calm, and clear.
-      </p>
-      <div id="totSummary"></div>
-      <div id="totCards"></div>
-    </section>
-
-    <!-- TRACKING PAGE -->
-    <section class="page-view" id="trackingView">
-      <h2 class="page-title underline-soft">Tracking</h2>
-      <p class="view-description">
-        Add tokens, lock entries, and track your coins effortlessly.
-      </p>
-
-      <button id="addTokenBtn" class="primary-pill">Add token</button>
-      <button id="refreshPricesBtn" class="ghost-pill">Refresh prices</button>
-
-      <!-- TOKEN FORM PANEL -->
-      <div id="tokenForm" class="token-form hidden">
-        <div class="token-form-header">
-          <div>
-            <div class="token-form-title">New token entry</div>
-            <div class="token-form-subtext">
-              Choose a coin, set your entry, we’ll track the rest.
-            </div>
-          </div>
-          <button class="token-form-close" id="tokenFormClose">×</button>
-        </div>
-
-        <form id="tokenFormElement">
-          <div class="form-row">
-            <label class="form-label" for="quickCoinSelect">Quick coin select</label>
-            <select id="quickCoinSelect" class="token-select">
-              <option value="">Choose a popular coin…</option>
-              <option value="bitcoin|BTC|Bitcoin">Bitcoin (BTC)</option>
-              <option value="ethereum|ETH|Ethereum">Ethereum (ETH)</option>
-              <option value="solana|SOL|Solana">Solana (SOL)</option>
-              <option value="ripple|XRP|XRP</option>
-              <option value="dogecoin|DOGE|Dogecoin">Dogecoin (DOGE)</option>
-              <option value="cardano|ADA|Cardano">Cardano (ADA)</option>
-            </select>
-          </div>
-
-          <div class="form-row">
-            <label class="form-label" for="coinName">Name of coin</label>
-            <input id="coinName" class="token-input" type="text" placeholder="e.g. Bitcoin" required />
-          </div>
-
-          <div class="form-row">
-            <label class="form-label" for="coinSymbol">Symbol / ticker</label>
-            <input id="coinSymbol" class="token-input" type="text" placeholder="e.g. BTC" required />
-          </div>
-
-          <div class="form-row">
-            <label class="form-label" for="buyPrice">Your buy price (per coin, USD)</label>
-            <input id="buyPrice" class="token-input" type="number" min="0" step="0.00000001" placeholder="e.g. 42000" required />
-          </div>
-
-          <div class="form-row">
-            <label class="form-label" for="coinAmount">Amount of coin</label>
-            <input id="coinAmount" class="token-input" type="number" min="0" step="0.00000001" placeholder="e.g. 0.25" required />
-          </div>
-
-          <div class="form-row" style="margin-top:0.8rem;">
-            <button type="submit" class="primary-pill">Save token</button>
-          </div>
-        </form>
-      </div>
-
-      <!-- TOKENS TABLE -->
-      <div class="table-wrapper">
-        <table>
-          <tbody id="tokenTableBody"></tbody>
-        </table>
-        <p id="emptyState">No tokens yet.</p>
-      </div>
-    </section>
-
-  </main>
-</div>
-
-<script>
-/* ======================== */
-/* MENU BEHAVIOR */
-/* ======================== */
-const hamburger = document.getElementById("hamburger");
-const menuOverlay = document.getElementById("menuOverlay");
-const menuClose = document.getElementById("menuClose");
-
-hamburger.addEventListener("click", () => {
-  menuOverlay.classList.add("active");
-});
-menuClose.addEventListener("click", () => {
-  menuOverlay.classList.remove("active");
-});
-
-document.querySelectorAll(".menu-item").forEach(item => {
-  item.addEventListener("click", () => {
-    const view = item.dataset.view;
-    showView(view);
-    menuOverlay.classList.remove("active");
-  });
-});
-
-/* ======================== */
-/* VIEW SWITCHING */
-/* ======================== */
-function showView(viewName) {
-  document.querySelectorAll(".page-view").forEach(sec =>
-    sec.classList.remove("active")
-  );
-  document.getElementById(viewName + "View").classList.add("active");
-}
-
-/* Default page = Overview */
-showView("overview");
-
-/* ======================== */
-/* TOKEN FORM + TRACKER LOGIC */
-/* ======================== */
-
-const addTokenBtn = document.getElementById("addTokenBtn");
-const tokenForm = document.getElementById("tokenForm");
-const tokenFormClose = document.getElementById("tokenFormClose");
-const tokenFormElement = document.getElementById("tokenFormElement");
-
-const quickCoinSelect = document.getElementById("quickCoinSelect");
-const coinNameInput = document.getElementById("coinName");
-const coinSymbolInput = document.getElementById("coinSymbol");
-const buyPriceInput = document.getElementById("buyPrice");
-const coinAmountInput = document.getElementById("coinAmount");
-
-const tokenTableBody = document.getElementById("tokenTableBody");
-const emptyState = document.getElementById("emptyState");
-
-/* In-memory tokens for now */
-const tokens = [];
-
-/* Map of Coingecko IDs by symbol */
-const COINGECKO_MAP = {
-  BTC: "bitcoin",
-  ETH: "ethereum",
-  SOL: "solana",
-  XRP: "ripple",
-  DOGE: "dogecoin",
-  ADA: "cardano"
-};
-
-/* Show form */
-addTokenBtn.addEventListener("click", () => {
-  tokenForm.classList.remove("hidden");
-  addTokenBtn.style.display = "none";
-});
-
-/* Close form */
-tokenFormClose.addEventListener("click", () => {
-  tokenForm.classList.add("hidden");
-  addTokenBtn.style.display = "inline-block";
-});
-
-/* Quick select handler */
-<select id="quickCoinSelect" class="token-select">
-  <option value="">Choose a popular coin…</option>
-  <option value="bitcoin|BTC|Bitcoin">Bitcoin (BTC)</option>
-  <option value="ethereum|ETH|Ethereum">Ethereum (ETH)</option>
-  <option value="solana|SOL|Solana">Solana (SOL)</option>
-  <option value="ripple|XRP|XRP">XRP (XRP)</option>
-  <option value="dogecoin|DOGE|Dogecoin">Dogecoin (DOGE)</option>
-  <option value="cardano|ADA|Cardano">Cardano (ADA)</option>
-</select>
-
-  // Optionally prefill buy price later with live price.
-});
-
-/* Fetch current price from CoinGecko */
-async function fetchCurrentPrice(symbol) {
-  const upper = symbol.toUpperCase();
-  const id = COINGECKO_MAP[upper];
-  if (!id) return null;
-
-  try {
-    const res = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(
-        id
-      )}&vs_currencies=usd`
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data[id] || typeof data[id].usd !== "number") return null;
-    return data[id].usd;
-  } catch (err) {
-    console.error("Price fetch failed", err);
-    return null;
-  }
-}
-
-/* Render tokens table */
-function renderTokens() {
-  tokenTableBody.innerHTML = "";
-
-  if (!tokens.length) {
-    emptyState.style.display = "block";
-    return;
-  }
-
-  emptyState.style.display = "none";
-
-  tokens.forEach((t) => {
-    const tr = document.createElement("tr");
-
-    const nameTd = document.createElement("td");
-    nameTd.innerHTML = `
-      <div class="token-name">${t.name} (${t.symbol})</div>
-      <div class="token-meta">Amount: ${t.amount}</div>
-    `;
-
-    const costTd = document.createElement("td");
-    costTd.innerHTML = `
-      <div class="token-meta">Cost</div>
-      <div>$${t.cost.toFixed(2)}</div>
-    `;
-
-    const valueTd = document.createElement("td");
-    valueTd.innerHTML = `
-      <div class="token-meta">Value</div>
-      <div>$${t.value.toFixed(2)}</div>
-    `;
-
-    const pnlTd = document.createElement("td");
-    const pnlClass = t.pnl >= 0 ? "token-pnl-positive" : "token-pnl-negative";
-    pnlTd.innerHTML = `
-      <div class="token-meta">P/L</div>
-      <div class="${pnlClass}">$${t.pnl.toFixed(2)}</div>
-    `;
-
-    tr.appendChild(nameTd);
-    tr.appendChild(costTd);
-    tr.appendChild(valueTd);
-    tr.appendChild(pnlTd);
-
-    tokenTableBody.appendChild(tr);
-  });
-}
-
-/* Handle Save token */
-tokenFormElement.addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const name = coinNameInput.value.trim();
-  const symbol = coinSymbolInput.value.trim().toUpperCase();
-  const buyPrice = parseFloat(buyPriceInput.value);
-  const amount = parseFloat(coinAmountInput.value);
-
-  if (!name || !symbol || isNaN(buyPrice) || isNaN(amount)) {
-    alert("Please fill out all fields with valid values.");
-    return;
-  }
-
-  // Try to get live price; fall back to buy price
-  let lastPrice = await fetchCurrentPrice(symbol);
-  if (lastPrice === null) lastPrice = buyPrice;
-
-  const cost = buyPrice * amount;
-  const value = lastPrice * amount;
-  const pnl = value - cost;
-
-  tokens.push({
-    name,
-    symbol,
-    buyPrice,
-    amount,
-    lastPrice,
-    cost,
-    value,
-    pnl
-  });
-
-  renderTokens();
-
-  // Reset form for next entry
-  tokenFormElement.reset();
-  quickCoinSelect.value = "";
-  // Hide form, show Add token again
-  tokenForm.classList.add("hidden");
-  addTokenBtn.style.display = "inline-block";
-});
-</script>
-
-</body>
-</html>
+  <meta charset="UTF-8" />
+  <title>Burke Crypto Analytics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- FONTS -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --lavender: #dcd0ff;
+      --blue: #71c5ff;
+      --text-main: #f6f3ff;
+      --text-muted: #a9b0d6;
+      --success: #5dd9a3;
+      --danger: #ff5c8a;
+    }
+
+    /* SOFT GLOW */
+    .soft-glow {
+      text-shadow:
+        0 0 2px var(--blue),
+        0 0 6px rgba(113,197,255,0.7);
+    }
+
+    /* DOWN-GLOW UNDERLINE */
+    .underline-soft {
+      position: relative;
+    }
+    .underline-soft::after {
+      content: "";
+      display: block;
+      width: 45%;
+      height: 1px;
+      margin-top: 0.3rem;
+      background: var(--lavender);
+      border-radius: 1px;
+      box-shadow: 0 3px 6px rgba(113,197,255,0.6);
+    }
+
+    /* HIDDEN UTILITY */
+    .hidden {
+      display: none;
+    }
+
+    /* RESET */
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background: #050716;
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* APP SHELL */
+    .app-shell {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 1rem;
+      background: rgba(15,18,42,0.9);
+      backdrop-filter: blur(8px);
+      border-radius: 36px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.45);
+    }
+
+    /* HEADER */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* HAMBURGER */
+    .hamburger {
+      width: 32px;
+      height: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+    .hamburger .bar {
+      width: 100%;
+      height: 4px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #bfa8ff, #71c5ff);
+      box-shadow:
+        0 0 3px var(--blue),
+        0 0 7px rgba(113,197,255,0.8);
+    }
+
+    .logo-title {
+      flex: 1;
+      text-align: center;
+      font-family: "Playfair Display", serif;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-right: 18px;
+    }
+
+    /* FULL SCREEN MENU */
+    .menu-overlay {
+      position: fixed;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      backdrop-filter: blur(20px);
+      background: rgba(10,12,32,0.65);
+      transition: left .35s ease;
+      z-index: 999;
+      padding: 1.5rem;
+    }
+    .menu-overlay.active {
+      left: 0;
+    }
+
+    /* Glowing X */
+    .menu-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      font-size: 2rem;
+      line-height: 1;
+      color: var(--lavender);
+      text-shadow:
+        0 0 2px var(--blue),
+        0 0 6px rgba(113,197,255,0.7),
+        0 0 10px rgba(113,197,255,0.5);
