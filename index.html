@@ -11,25 +11,45 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 
 <style>
-/* ------------------------- */
-/* ROOT + RESETS */
-/* ------------------------- */
-
+/* ROOT COLORS & GLOW */
 :root {
-  --accent-purple: #bfa8ff;
-  --accent-blue: #71c5ff;
-  --accent-soft: #e6d6ff;
+  --lavender: #dcd0ff;
+  --blue: #71c5ff;
   --text-main: #f6f3ff;
   --text-muted: #a9b0d6;
   --glass-bg: rgba(10,12,32,0.55);
-  --underline-gradient: linear-gradient(90deg, #bfa8ff, #71c5ff);
 }
 
+/* Global glow: G-Med */
+.glow {
+  text-shadow:
+    0 0 4px var(--blue),
+    0 0 10px var(--blue),
+    0 0 16px var(--blue);
+}
+
+/* Down-glow underline styling */
+.underline {
+  position: relative;
+}
+.underline::after {
+  content: "";
+  display: block;
+  width: 55%;
+  height: 1px;     /* ultra-thin underline */
+  margin-top: 0.35rem;
+  background: var(--lavender);
+  border-radius: 1px;
+  box-shadow: 0 4px 8px var(--blue);  /* downward glow only */
+}
+
+/* ------------------------- */
+/* RESETS */
+/* ------------------------- */
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
 }
-
 html, body {
   margin: 0;
   padding: 0;
@@ -41,31 +61,28 @@ html, body {
 }
 
 /* ------------------------- */
-/* APP WRAPPER */
+/* APP SHELL */
 /* ------------------------- */
-
 .app-shell {
-  width: 100%;
   max-width: 480px;
   margin: 0 auto;
   padding: 1rem;
-  border-radius: 36px;
   background: rgba(15,18,42,0.85);
   backdrop-filter: blur(6px);
+  border-radius: 36px;
   box-shadow: 0 24px 80px rgba(0,0,0,0.45);
 }
 
 /* ------------------------- */
 /* HEADER */
 /* ------------------------- */
-
 .top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-/* Hamburger button */
+/* HAMBURGER */
 .hamburger {
   width: 32px;
   height: 24px;
@@ -74,46 +91,45 @@ html, body {
   justify-content: space-between;
   cursor: pointer;
 }
-
 .hamburger .bar {
   width: 100%;
   height: 4px;
   border-radius: 4px;
   background: linear-gradient(90deg, #bfa8ff, #71c5ff);
-  box-shadow: 0 0 8px #71c5ff;
+  box-shadow:
+    0 0 4px var(--blue),
+    0 0 10px var(--blue),
+    0 0 16px var(--blue);
 }
 
 .logo-title {
   flex: 1;
   text-align: center;
   font-family: "Playfair Display", serif;
+  font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  font-size: 1rem;
   margin-right: 18px;
 }
 
 /* ------------------------- */
 /* FULL SCREEN MENU */
 /* ------------------------- */
-
 .menu-overlay {
   position: fixed;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  backdrop-filter: blur(16px);
-  background: rgba(10,12,32,0.55);
+  backdrop-filter: blur(20px);
+  background: rgba(10,12,32,0.6);
   transition: left .35s ease;
   z-index: 999;
   padding: 1.5rem;
 }
-
 .menu-overlay.active {
   left: 0;
 }
-
 .menu-close {
   position: absolute;
   top: 1rem;
@@ -121,12 +137,12 @@ html, body {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: none;
-  cursor: pointer;
   background: rgba(255,255,255,0.15);
   backdrop-filter: blur(8px);
+  border: none;
   font-size: 1.5rem;
   color: white;
+  cursor: pointer;
 }
 
 .menu-title {
@@ -134,43 +150,45 @@ html, body {
   text-align: center;
   font-family: "Playfair Display", serif;
   font-size: 1.4rem;
-  color: white;
-  text-shadow: 0 0 10px var(--accent-blue);
-  letter-spacing: 0.06em;
+  color: var(--lavender);
+  text-shadow:
+    0 0 4px var(--blue),
+    0 0 10px var(--blue),
+    0 0 16px var(--blue);
 }
 
 /* Menu items */
 .menu-items {
-  margin-top: 4rem;
+  margin-top: 3.5rem;
   text-align: center;
 }
-
 .menu-item {
   font-family: "Playfair Display", serif;
   font-size: 1.8rem;
-  margin: 1.35rem 0;
-  color: #dcd0ff; /* light pretty lavender */
-  text-shadow: 0 0 10px var(--accent-blue);
+  margin: 1.5rem 0;
+  color: var(--lavender);
+  text-shadow:
+    0 0 4px var(--blue),
+    0 0 10px var(--blue),
+    0 0 16px var(--blue);
   cursor: pointer;
+  letter-spacing: 0.06em;
   position: relative;
-  letter-spacing: 0.07em;
 }
-
 .menu-item::after {
   content: "";
   display: block;
-  width: 60%;
-  height: 2px; /* U2 thin underline */
+  width: 55%;
+  height: 1px;
+  background: var(--lavender);
+  border-radius: 1px;
   margin: 0.35rem auto 0;
-  background: var(--underline-gradient);
-  border-radius: 2px;
-  opacity: 0.9;
+  box-shadow: 0 4px 8px var(--blue); /* down-glow */
 }
 
 /* ------------------------- */
 /* PAGE CARD */
 /* ------------------------- */
-
 .card {
   margin-top: 1rem;
   padding: 1.3rem 1.2rem;
@@ -183,34 +201,20 @@ html, body {
 /* ------------------------- */
 /* PAGE TITLES */
 /* ------------------------- */
-
 .page-title {
   font-family: "Playfair Display", serif;
   font-size: 1.4rem;
+  color: var(--lavender);
   margin: 0;
-  padding-bottom: 0.35rem;
-  position: relative;
-  text-shadow: 0 0 10px var(--accent-blue);
   letter-spacing: 0.03em;
+  text-shadow:
+    0 0 4px var(--blue),
+    0 0 10px var(--blue),
+    0 0 16px var(--blue);
 }
-
-.page-title::after {
-  /* U2 thin underline */
-  content: "";
-  display: block;
-  width: 55%;
-  height: 2px;
-  background: var(--underline-gradient);
-  border-radius: 2px;
-  margin-top: 0.35rem;
+.page-title.underline::after {
+  width: 45%;
 }
-
-/* ------------------------- */
-/* VIEWS */
-/* ------------------------- */
-
-.view { display: none; }
-.view.active { display: block; }
 
 .view-description {
   margin: .6rem 0 1rem;
@@ -221,7 +225,6 @@ html, body {
 /* ------------------------- */
 /* BUTTONS */
 /* ------------------------- */
-
 .primary-pill {
   background: linear-gradient(135deg, #bfa8ff, #71c5ff);
   color: #06061a;
@@ -231,51 +234,51 @@ html, body {
   font-weight: 600;
   cursor: pointer;
   margin-right: .6rem;
+  box-shadow:
+    0 0 4px var(--blue),
+    0 0 10px var(--blue),
+    0 0 16px var(--blue);
 }
 
 .ghost-pill {
   background: transparent;
   border: 1px solid rgba(165, 177, 255, 0.5);
-  color: var(--accent-soft);
+  color: var(--lavender);
   padding: 0.55rem 1.2rem;
   border-radius: 999px;
   cursor: pointer;
 }
 
 /* ------------------------- */
-/* TABLE + CARDS */
+/* TABLE AREA */
 /* ------------------------- */
-
 .table-wrapper {
   margin-top: 1rem;
   padding: .8rem;
   background: rgba(20,22,50,0.55);
-  border: 1px solid rgba(140,155,255,0.25);
   border-radius: 16px;
+  border: 1px solid rgba(140,155,255,0.25);
 }
-
 table {
   width: 100%;
   font-size: .75rem;
   color: var(--text-main);
   border-collapse: collapse;
 }
-
 td {
   padding: .35rem 0;
   border-top: 1px solid rgba(60,70,120,0.5);
 }
-
-.token-pnl-positive { color: #5dd9a3; }
-.token-pnl-negative { color: #ff5c8a; }
-
 @media (max-width: 600px) {
   table thead { display: none; }
   table td { display: block; border-top: none; }
-  table tr { border-top: 1px solid rgba(60,70,120,0.45); margin-bottom:.6rem; }
+  table tr {
+    border-top: 1px solid rgba(60,70,120,0.45);
+    margin-bottom: .6rem;
+  }
 }
 
-/* TOT cards */
+/* TOT summary cards */
 .tot-card {
   background: rgba(20,22,45,0.6);
   border: 1px solid rgba(140,155,255,0.3);
@@ -288,14 +291,10 @@ td {
 
 <body>
 
-<!-- ================================ -->
-<!-- FULL SCREEN MENU -->
-<!-- ================================ -->
+<!-- MENU OVERLAY -->
 <div class="menu-overlay" id="menuOverlay">
-
   <button class="menu-close" id="menuClose">×</button>
-
-  <div class="menu-title">Menu</div>
+  <div class="menu-title glow">Menu</div>
 
   <div class="menu-items">
     <div class="menu-item" data-view="overview">Overview</div>
@@ -303,9 +302,6 @@ td {
   </div>
 </div>
 
-<!-- ================================ -->
-<!-- APP SHELL -->
-<!-- ================================ -->
 <div class="app-shell">
 
   <!-- HEADER -->
@@ -319,25 +315,21 @@ td {
     <div class="logo-title">Burke Crypto Analytics</div>
   </header>
 
-  <!-- CARD WRAPPER -->
   <main class="card">
 
-    <!-- OVERVIEW VIEW -->
+    <!-- OVERVIEW -->
     <section class="view active" id="overviewView">
-      <h2 class="page-title">Overview</h2>
-
+      <h2 class="page-title underline glow">Overview</h2>
       <p class="view-description">
         Your total crypto summary — soft, calm, and clear.
       </p>
-
       <div id="totSummary"></div>
       <div id="totCards"></div>
     </section>
 
-    <!-- TRACKING VIEW -->
+    <!-- TRACKING -->
     <section class="view" id="trackingView">
-      <h2 class="page-title">Tracking</h2>
-
+      <h2 class="page-title underline glow">Tracking</h2>
       <p class="view-description">
         Add tokens, lock entries, and track your coins effortlessly.
       </p>
@@ -357,10 +349,7 @@ td {
 </div>
 
 <script>
-/* ================================ */
-/* MENU INTERACTION */
-/* ================================ */
-
+/* MENU LOGIC */
 const hamburger = document.getElementById("hamburger");
 const menuOverlay = document.getElementById("menuOverlay");
 const menuClose = document.getElementById("menuClose");
@@ -368,11 +357,9 @@ const menuClose = document.getElementById("menuClose");
 hamburger.addEventListener("click", () => {
   menuOverlay.classList.add("active");
 });
-
 menuClose.addEventListener("click", () => {
   menuOverlay.classList.remove("active");
 });
-
 document.querySelectorAll(".menu-item").forEach(item => {
   item.addEventListener("click", () => {
     const view = item.dataset.view;
@@ -381,24 +368,14 @@ document.querySelectorAll(".menu-item").forEach(item => {
   });
 });
 
-/* ================================ */
-/* VIEW SWITCHING */
-/* ================================ */
-
+/* VIEW SWITCH */
 function showView(v) {
-  document.querySelectorAll(".view").forEach(sec =>
+  document.querySelectorAll(".view").forEach( sec =>
     sec.classList.remove("active")
   );
   document.getElementById(v + "View").classList.add("active");
 }
-
-/* Default: Overview */
 showView("overview");
-
-/* ================================ */
-/* (YOU CAN ADD YOUR TRACKER LOGIC HERE LATER) */
-/* ================================ */
-
 </script>
 
 </body>
