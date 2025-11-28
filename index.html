@@ -14,11 +14,11 @@
     />
 
     <style>
+      /* ------------------------------
+         BASE STYLE RESET
+      ------------------------------ */
+
       :root {
-        --bg-gradient-start: #07091c;
-        --bg-gradient-end: #120a3b;
-        --card-bg: rgba(4, 8, 30, 0.9);
-        --card-border: rgba(150, 174, 255, 0.55);
         --accent-purple: #bfa8ff;
         --accent-blue: #71c5ff;
         --accent-soft: #e6d6ff;
@@ -26,417 +26,176 @@
         --text-muted: #a9b0d6;
         --danger: #ff5c8a;
         --success: #5dd9a3;
-        --shadow-soft: 0 24px 80px rgba(0, 0, 0, 0.7);
-        --radius-card: 32px;
-        --radius-pill: 999px;
+
+        --shadow-soft: 0 24px 80px rgba(0, 0, 0, 0.55);
+        --glass-bg: rgba(10, 12, 32, 0.55);
+        --glass-border: rgba(200, 210, 255, 0.25);
       }
 
-      *,
-      *::before,
-      *::after {
+      * {
         box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
       }
 
       html,
       body {
         margin: 0;
         padding: 0;
-        height: 100%;
-        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
-          sans-serif;
-        background: radial-gradient(
-            circle at top,
-            rgba(180, 138, 255, 0.22),
-            transparent 55%
-          ),
-          radial-gradient(
-            circle at bottom,
-            rgba(113, 197, 255, 0.2),
-            transparent 60%
-          ),
-          linear-gradient(
-            135deg,
-            var(--bg-gradient-start),
-            var(--bg-gradient-end)
-          );
+        min-height: 100%;
+        font-family: "Inter", sans-serif;
+        background: #0a0c20;
         color: var(--text-main);
+        overflow-x: hidden;
       }
 
       body {
-        display: flex;
-        align-items: stretch;
-        justify-content: center;
         padding: 1.5rem 0.75rem 2.5rem;
       }
+
+      /* ------------------------------
+         APP WRAPPER
+      ------------------------------ */
 
       .app-shell {
         width: 100%;
         max-width: 480px;
         margin: 0 auto;
-        border-radius: 42px;
-        padding: 1.25rem 1.25rem 1.75rem;
-        background: radial-gradient(
-            circle at 0% 0%,
-            rgba(190, 140, 255, 0.3),
-            transparent 45%
-          ),
-          radial-gradient(
-            circle at 100% 100%,
-            rgba(113, 197, 255, 0.25),
-            transparent
-          ),
-          rgba(5, 7, 25, 0.9);
+        border-radius: 36px;
+        padding: 1rem;
+        background: rgba(15, 18, 42, 0.85);
+        backdrop-filter: blur(6px);
         box-shadow: var(--shadow-soft);
-        position: relative;
-        overflow: hidden;
       }
+
+      /* ------------------------------
+         HEADER
+      ------------------------------ */
 
       .top-bar {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 0.75rem;
-        margin-bottom: 1rem;
       }
 
-      .menu-toggle {
-        border-radius: 999px;
-        border: 1px solid rgba(208, 214, 255, 0.7);
-        background: rgba(5, 7, 25, 0.85);
-        color: var(--text-main);
-        padding: 0.35rem 0.9rem;
-        font-size: 0.8rem;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
+      /* Hamburger Icon */
+      .hamburger {
+        width: 28px;
+        height: 22px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
         cursor: pointer;
       }
 
+      .bar {
+        width: 100%;
+        height: 3px;
+        background: var(--accent-blue);
+        border-radius: 3px;
+        box-shadow: 0 0 8px var(--accent-blue);
+      }
+
+      /* Header Logo */
       .logo-cluster {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+        text-align: center;
         flex: 1;
-        justify-content: center;
-        min-width: 0;
-      }
-
-      .bca-logo-mark {
-        width: 34px;
-        height: 34px;
-        border-radius: 999px;
-        background: radial-gradient(
-          circle at 30% 10%,
-          #ffffff,
-          #c1b0ff 40%,
-          #71c5ff
-        );
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 0 24px rgba(169, 144, 255, 0.7);
-      }
-
-      .bca-logo-text-short {
-        font-family: "Playfair Display", serif;
-        font-size: 0.8rem;
-        font-weight: 700;
-        color: #111222;
       }
 
       .bca-logo-text-long {
         font-family: "Playfair Display", serif;
-        font-size: 0.9rem;
-        letter-spacing: 0.12em;
         text-transform: uppercase;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        letter-spacing: 0.12em;
+        font-size: 1rem;
       }
 
-      .tab-toggle {
+      /* ------------------------------
+         FULL SCREEN SLIDING MENU
+      ------------------------------ */
+
+      .menu-overlay {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        backdrop-filter: blur(16px);
+        background: rgba(10, 12, 32, 0.55);
+        border-right: 1px solid var(--glass-border);
+        transition: left 0.35s ease;
+        z-index: 999;
         display: flex;
-        align-items: center;
-        padding: 0.2rem;
-        border-radius: var(--radius-pill);
-        background: radial-gradient(circle at 0% 0%, #bfa8ff, #71c5ff);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.65);
+        flex-direction: column;
+        padding: 1.5rem;
       }
 
-      .tab-toggle.collapsed {
-        display: none;
+      .menu-overlay.active {
+        left: 0;
       }
 
-      .tab-btn {
+      /* X button (top-right) */
+      .menu-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        font-size: 1.5rem;
+        color: white;
+        background: rgba(255, 255, 255, 0.15);
         border: none;
-        background: transparent;
-        padding: 0.25rem 0.7rem;
-        border-radius: var(--radius-pill);
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
         cursor: pointer;
-        font-size: 0.75rem;
-        color: var(--text-main);
-        position: relative;
+        backdrop-filter: blur(8px);
       }
 
-      .tab-btn .icon-wrapper {
-        width: 22px;
-        height: 22px;
-        border-radius: 999px;
-        background: rgba(6, 8, 30, 0.95);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
+      /* Menu Items */
+      .menu-items {
+        margin-top: 6rem;
+        text-align: center;
       }
 
-      .icon-svg {
-        width: 18px;
-        height: 18px;
-        display: block;
+      .menu-item {
+        font-family: "Playfair Display", serif;
+        font-size: 1.8rem;
+        margin: 1.2rem 0;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: white;
+        text-shadow: 0 0 12px var(--accent-blue);
+        cursor: pointer;
       }
 
-      .tab-btn.active {
-        background: rgba(4, 8, 30, 0.96);
-      }
-
-      .tab-btn .tab-label {
-        font-weight: 500;
-      }
+      /* ------------------------------
+         CARD / LAYOUT
+      ------------------------------ */
 
       .card {
-        margin-top: 0.5rem;
-        border-radius: var(--radius-card);
-        border: 1px solid var(--card-border);
-        background: linear-gradient(
-            145deg,
-            rgba(10, 13, 40, 0.97),
-            rgba(6, 10, 35, 0.98)
-          );
-        padding: 1.4rem 1.3rem 1.6rem;
-        box-shadow: 0 16px 60px rgba(0, 0, 0, 0.75);
-      }
-
-      .card-hero {
-        margin-bottom: 1.1rem;
+        margin-top: 1rem;
+        padding: 1rem 1.1rem;
+        border-radius: 24px;
+        background: rgba(18, 20, 45, 0.7);
+        border: 1px solid rgba(120, 140, 255, 0.25);
+        backdrop-filter: blur(4px);
       }
 
       .app-title {
         font-family: "Playfair Display", serif;
-        font-size: 1.5rem;
+        font-size: 1.4rem;
+        letter-spacing: 0.12em;
         text-transform: uppercase;
-        letter-spacing: 0.14em;
         margin: 0;
       }
 
       .app-subtitle {
-        margin: 0.4rem 0 0.25rem;
-        font-family: "Playfair Display", serif;
-        font-size: 0.9rem;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
+        margin: 0.3rem 0 0.2rem;
         color: var(--accent-soft);
+        font-size: 0.9rem;
       }
 
       .app-tagline {
-        margin: 0.4rem 0 0;
-        font-size: 0.85rem;
+        margin: 0.4rem 0;
         color: var(--text-muted);
-        max-width: 20rem;
-      }
-
-      .view-description {
-        font-size: 0.8rem;
-        color: var(--text-muted);
-        margin: 0 0 0.75rem;
-      }
-
-      .primary-pill,
-      .ghost-pill {
-        border-radius: var(--radius-pill);
-        padding: 0.5rem 1rem;
-        font-size: 0.8rem;
-        border: none;
-        cursor: pointer;
-        white-space: nowrap;
-      }
-
-      .primary-pill {
-        background: linear-gradient(
-          135deg,
-          var(--accent-purple),
-          var(--accent-blue)
-        );
-        color: #06061a;
-        font-weight: 600;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-      }
-
-      .ghost-pill {
-        background: transparent;
-        color: var(--accent-soft);
-        border: 1px solid rgba(165, 177, 255, 0.5);
-      }
-
-      .primary-pill.wide {
-        width: 100%;
-        margin-top: 0.75rem;
-      }
-
-      .tracker-controls {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        align-items: center;
-        margin-bottom: 0.75rem;
-      }
-
-      .token-form-panel {
-        border-radius: 24px;
-        border: 1px solid rgba(133, 158, 255, 0.7);
-        background: rgba(7, 10, 38, 0.96);
-        padding: 0.9rem 0.9rem 1rem;
-        margin-bottom: 0.9rem;
-      }
-
-      .token-form-panel.hidden {
-        display: none;
-      }
-
-      .token-form-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 0.5rem;
-        margin-bottom: 0.6rem;
-      }
-
-      .token-form-title {
-        font-size: 0.9rem;
-        font-weight: 600;
-      }
-
-      .token-form-subtitle {
-        display: block;
-        font-size: 0.7rem;
-        color: var(--text-muted);
-      }
-
-      .close-form-btn {
-        border-radius: 999px;
-        border: 1px solid rgba(190, 200, 255, 0.8);
-        width: 24px;
-        height: 24px;
-        background: rgba(5, 7, 25, 0.95);
-        color: var(--text-main);
-        cursor: pointer;
-        font-size: 0.9rem;
-        line-height: 1;
-      }
-
-      .field {
-        margin-bottom: 0.6rem;
-      }
-
-      .field label {
-        display: block;
         font-size: 0.75rem;
-        margin-bottom: 0.25rem;
-      }
-
-      .field input,
-      .field select {
-        width: 100%;
-        border-radius: 999px;
-        border: 1px solid rgba(134, 156, 255, 0.7);
-        background: rgba(6, 9, 30, 0.98);
-        color: var(--text-main);
-        padding: 0.45rem 0.8rem;
-        font-size: 0.8rem;
-      }
-
-      .field-inline {
-        display: flex;
-        gap: 0.5rem;
-      }
-
-      .field-inline > div {
-        flex: 1;
-      }
-
-      .hint {
-        display: block;
-        font-size: 0.68rem;
-        color: var(--text-muted);
-        margin-top: 0.2rem;
-      }
-
-      .table-wrapper {
-        margin-top: 0.5rem;
-        border-radius: 18px;
-        background: radial-gradient(
-            circle at 0% 0%,
-            rgba(191, 168, 255, 0.12),
-            transparent 60%
-          ),
-          radial-gradient(
-            circle at 100% 100%,
-            rgba(113, 197, 255, 0.1),
-            transparent 60%
-          ),
-          rgba(7, 9, 32, 0.96);
-        border: 1px solid rgba(138, 162, 255, 0.5);
-        padding: 0.5rem 0.6rem 0.6rem;
-      }
-
-      .token-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.72rem;
-      }
-
-      .token-table thead th {
-        text-align: left;
-        font-weight: 500;
-        color: var(--text-muted);
-        padding: 0.25rem 0.2rem;
-      }
-
-      .token-table tbody td {
-        padding: 0.22rem 0.2rem;
-        border-top: 1px solid rgba(44, 56, 110, 0.9);
-      }
-
-      .token-name {
-        font-weight: 500;
-      }
-
-      .token-symbol {
-        color: var(--text-muted);
-        font-size: 0.68rem;
-      }
-
-      .token-pnl-positive {
-        color: var(--success);
-      }
-
-      .token-pnl-negative {
-        color: var(--danger);
-      }
-
-      .row-actions button {
-        border: none;
-        background: transparent;
-        color: rgba(223, 215, 255, 0.9);
-        cursor: pointer;
-        font-size: 0.8rem;
-      }
-
-      .empty-state {
-        margin: 0.4rem 0 0;
-        font-size: 0.72rem;
-        color: var(--text-muted);
       }
 
       .view {
@@ -447,238 +206,114 @@
         display: block;
       }
 
-      .tot-summary {
-        border-radius: 18px;
-        border: 1px solid rgba(160, 184, 255, 0.75);
-        padding: 0.65rem 0.75rem;
-        background: radial-gradient(
-            circle at 0% 0%,
-            rgba(191, 168, 255, 0.12),
-            transparent 70%
-          ),
-          rgba(6, 9, 30, 0.96);
-        margin-bottom: 0.8rem;
-        font-size: 0.78rem;
-      }
-
-      .tot-summary-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 0.2rem;
-      }
-
-      .tot-summary-row span:last-child {
+      /* Buttons */
+      .primary-pill {
+        background: linear-gradient(135deg, #bfa8ff, #71c5ff);
+        color: #06061a;
         font-weight: 600;
+        padding: 0.5rem 1rem;
+        border-radius: 999px;
+        border: none;
+        cursor: pointer;
       }
 
-      .tot-cards {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 0.55rem;
+      .ghost-pill {
+        border-radius: 999px;
+        background: transparent;
+        color: var(--accent-soft);
+        border: 1px solid rgba(165, 177, 255, 0.45);
+        padding: 0.45rem 1rem;
       }
 
-      .tot-card {
+      /* TABLE */
+      .table-wrapper {
+        margin-top: 0.75rem;
         border-radius: 16px;
-        border: 1px solid rgba(135, 158, 255, 0.7);
-        background: rgba(7, 10, 38, 0.96);
-        padding: 0.6rem 0.7rem;
-        font-size: 0.74rem;
+        padding: 0.6rem;
+        background: rgba(20, 22, 50, 0.6);
+        border: 1px solid rgba(140, 155, 255, 0.25);
       }
 
-      .tot-card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        margin-bottom: 0.25rem;
-      }
-
-      .tot-card-name {
-        font-weight: 500;
-      }
-
-      .tot-card-symbol {
-        font-size: 0.68rem;
-        color: var(--text-muted);
-      }
-
-      .tot-card-row {
-        font-size: 0.7rem;
-        color: var(--text-muted);
-      }
-
-      .tot-card-row span:first-child {
+      table {
+        width: 100%;
         color: var(--text-main);
+        border-collapse: collapse;
+        font-size: 0.75rem;
       }
 
+      thead {
+        color: var(--text-muted);
+        font-size: 0.7rem;
+      }
+
+      td {
+        padding: 0.35rem 0.3rem;
+        border-top: 1px solid rgba(55, 70, 120, 0.4);
+      }
+
+      .token-pnl-positive {
+        color: var(--success);
+      }
+      .token-pnl-negative {
+        color: var(--danger);
+      }
+
+      .row-actions button {
+        background: none;
+        border: none;
+        color: #ddd;
+        cursor: pointer;
+      }
+
+      /* TOT CARDS */
+      .tot-card {
+        background: rgba(20, 22, 45, 0.6);
+        border: 1px solid rgba(140, 155, 255, 0.3);
+        border-radius: 16px;
+        padding: 0.7rem;
+        margin-bottom: 0.6rem;
+      }
+
+      /* MOBILE RESPONSIVE */
       @media (max-width: 600px) {
-        body {
-          padding: 1.2rem 0.6rem 2rem;
-        }
-
-        .app-shell {
-          border-radius: 36px;
-        }
-
-        .card {
-          border-radius: 26px;
-          padding: 1.1rem 1.05rem 1.35rem;
-        }
-
-        .app-title {
-          font-size: 1.35rem;
-        }
-
-        .token-table thead {
+        table thead {
           display: none;
         }
-
-        .token-table tbody td {
+        table td {
           display: block;
-          padding: 0.15rem 0;
+          padding: 0.2rem 0;
           border-top: none;
         }
-
-        .token-table tbody tr {
-          border-top: 1px solid rgba(44, 56, 110, 0.9);
-        }
-
-        .token-table tbody tr:first-child {
-          border-top: none;
-        }
-
-        .row-actions {
-          text-align: right;
-        }
-
-        .table-wrapper {
-          padding: 0.5rem 0.55rem 0.5rem;
-        }
-
-        .tab-toggle.collapsed {
-          display: none;
+        table tr {
+          border-top: 1px solid rgba(60, 70, 120, 0.5);
+          margin-bottom: 0.5rem;
         }
       }
     </style>
   </head>
 
   <body>
+    <!-- MENU OVERLAY -->
+    <div class="menu-overlay" id="menuOverlay">
+      <button class="menu-close" id="menuClose">×</button>
+
+      <div class="menu-items">
+        <div class="menu-item" data-view="tot">TOT Crypto</div>
+        <div class="menu-item" data-view="tracker">Tracker</div>
+      </div>
+    </div>
+
     <div class="app-shell">
       <header class="top-bar">
-        <button class="menu-toggle" id="menuToggle">Menu</button>
-
-        <div class="logo-cluster">
-          <div class="bca-logo-mark">
-            <span class="bca-logo-text-short">BCA</span>
-          </div>
-          <div class="bca-logo-text-long">Burke Crypto Analytics</div>
+        <!-- Hamburger -->
+        <div class="hamburger" id="hamburger">
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
         </div>
 
-        <div class="tab-toggle" id="tabToggle">
-          <button class="tab-btn active" data-view="tracker">
-            <span class="icon-wrapper">
-              <!-- Tracker icon -->
-              <svg
-                class="icon-svg"
-                viewBox="0 0 64 64"
-                aria-hidden="true"
-              >
-                <defs>
-                  <linearGradient
-                    id="trackerGradient"
-                    x1="0"
-                    y1="0"
-                    x2="1"
-                    y2="1"
-                  >
-                    <stop offset="0%" stop-color="#bfa8ff" />
-                    <stop offset="100%" stop-color="#71c5ff" />
-                  </linearGradient>
-                </defs>
-                <circle
-                  cx="32"
-                  cy="32"
-                  r="28"
-                  fill="url(#trackerGradient)"
-                  stroke="#e4e6ff"
-                  stroke-width="2"
-                />
-                <path
-                  d="M22 23c4-6 11-8 18-5-4 2-6 6-6 10 0 4 2 8 6 10-7 3-14 1-18-5-2-3-2-7 0-10z"
-                  fill="rgba(10,12,40,0.25)"
-                />
-                <polyline
-                  points="18,40 26,34 33,37 42,26 48,30"
-                  fill="none"
-                  stroke="#101324"
-                  stroke-width="2.2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            </span>
-            <span class="tab-label">Tracker</span>
-          </button>
-
-          <button class="tab-btn" data-view="tot">
-            <span class="icon-wrapper">
-              <!-- TOT Crypto icon (TC coin) -->
-              <svg
-                class="icon-svg"
-                viewBox="0 0 64 64"
-                aria-hidden="true"
-              >
-                <defs>
-                  <radialGradient id="tcGradient" cx="30%" cy="20%" r="80%">
-                    <stop offset="0%" stop-color="#e6d6ff" />
-                    <stop offset="45%" stop-color="#bfa8ff" />
-                    <stop offset="100%" stop-color="#71c5ff" />
-                  </radialGradient>
-                </defs>
-                <circle
-                  cx="32"
-                  cy="32"
-                  r="29"
-                  fill="#0c0f2a"
-                  opacity="0.7"
-                />
-                <circle
-                  cx="32"
-                  cy="32"
-                  r="24"
-                  fill="url(#tcGradient)"
-                  stroke="#f3f3ff"
-                  stroke-width="1.5"
-                />
-                <circle
-                  cx="32"
-                  cy="32"
-                  r="24"
-                  fill="none"
-                  stroke="rgba(255,255,255,0.35)"
-                  stroke-width="2"
-                />
-                <text
-                  x="22"
-                  y="36"
-                  font-family="Playfair Display, 'Times New Roman', serif"
-                  font-size="14"
-                  fill="#ffffff"
-                >
-                  T
-                </text>
-                <text
-                  x="33"
-                  y="36"
-                  font-family="Playfair Display, 'Times New Roman', serif"
-                  font-size="14"
-                  fill="#ffffff"
-                >
-                  ₵
-                </text>
-              </svg>
-            </span>
-            <span class="tab-label">TOT Crypto</span>
-          </button>
+        <div class="logo-cluster">
+          <div class="bca-logo-text-long">Burke Crypto Analytics</div>
         </div>
       </header>
 
@@ -692,10 +327,10 @@
           </p>
         </section>
 
-        <section class="view view-tracker active" id="trackerView">
+        <!-- TRACKER VIEW -->
+        <section class="view" id="trackerView">
           <p class="view-description">
-            Use tracker view to add coins, lock in your entry, and let Burke
-            Crypto Analytics do the soft-goth math for you.
+            Add coins, track entries, and watch your portfolio glow.
           </p>
 
           <div class="tracker-controls">
@@ -706,426 +341,65 @@
           </div>
 
           <div id="tokenFormPanel" class="token-form-panel hidden">
-            <div class="token-form-header">
-              <div>
-                <span class="token-form-title">New token entry</span>
-                <span class="token-form-subtitle">
-                  Choose a coin, set your entry, we’ll track the rest.
-                </span>
-              </div>
-              <button
-                id="closeFormBtn"
-                class="close-form-btn"
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-
-            <form id="tokenForm" autocomplete="off">
-              <div class="field">
-                <label for="quickSelect">Quick coin select</label>
-                <select id="quickSelect">
-                  <option value="">Choose a popular coin…</option>
-                </select>
-                <small class="hint">
-                  This list comes from CoinGecko. For degen/tiny tokens, you can
-                  type your own name &amp; ticker below.
-                </small>
-              </div>
-
-              <div class="field">
-                <label for="coinName">Name of coin</label>
-                <input id="coinName" type="text" placeholder="Bitcoin" required />
-              </div>
-
-              <div class="field">
-                <label for="coinSymbol">Symbol / ticker</label>
-                <input id="coinSymbol" type="text" placeholder="BTC" required />
-              </div>
-
-              <div class="field field-inline">
-                <div>
-                  <label for="buyPrice">Your buy price (per coin, USD)</label>
-                  <input
-                    id="buyPrice"
-                    type="number"
-                    step="0.00000001"
-                    min="0"
-                    placeholder="42000"
-                    required
-                  />
-                </div>
-                <div>
-                  <label for="amountHeld">Amount of coin</label>
-                  <input
-                    id="amountHeld"
-                    type="number"
-                    step="0.00000001"
-                    min="0"
-                    placeholder="0.25"
-                    required
-                  />
-                </div>
-              </div>
-
-              <button type="submit" class="primary-pill wide">
-                Save token
-              </button>
-            </form>
+            <!-- form created later if you want -->
           </div>
 
           <div class="table-wrapper">
-            <table class="token-table">
-              <thead>
-                <tr>
-                  <th>Coin</th>
-                  <th>Entry</th>
-                  <th>Amount</th>
-                  <th>Cost</th>
-                  <th>Last price</th>
-                  <th>Value</th>
-                  <th>P/L</th>
-                  <th></th>
-                </tr>
-              </thead>
+            <table>
               <tbody id="tokenTableBody"></tbody>
             </table>
-            <p class="empty-state" id="emptyState">
-              No tokens yet. Tap <strong>Add token</strong> to start tracking.
-            </p>
+            <p id="emptyState">No tokens yet.</p>
           </div>
         </section>
 
-        <section class="view view-tot" id="totView">
+        <!-- TOT VIEW -->
+        <section class="view active" id="totView">
           <p class="view-description">
-            TOT Crypto shows your overall exposure – a soft summary of your
-            chaos.
+            Your total crypto overview — simple, soft, and calm.
           </p>
 
-          <div class="tot-summary" id="totSummary"></div>
-          <div class="tot-cards" id="totCards"></div>
+          <div id="totSummary"></div>
+          <div id="totCards"></div>
         </section>
       </main>
     </div>
 
     <script>
-      const STORAGE_KEY = "bca_tokens_v1";
-      let tokens = [];
-      let marketsCache = [];
+      /* ----------------------------
+         MENU LOGIC
+      ---------------------------- */
+      const menuOverlay = document.getElementById("menuOverlay");
+      const hamburger = document.getElementById("hamburger");
+      const menuClose = document.getElementById("menuClose");
 
-      function formatMoney(v) {
-        if (v == null || isNaN(v)) return "—";
-        const abs = Math.abs(v);
-        if (abs >= 100000) return "$" + v.toFixed(0);
-        if (abs >= 1000) return "$" + v.toFixed(2);
-        if (abs >= 1) return "$" + v.toFixed(2);
-        if (abs >= 0.01) return "$" + v.toFixed(4);
-        return "$" + v.toFixed(6);
-      }
-
-      function formatNumber(v) {
-        if (v == null || isNaN(v)) return "—";
-        if (Math.abs(v) >= 1) return v.toFixed(4);
-        return v.toFixed(8);
-      }
-
-      function pct(a, b) {
-        if (!b) return null;
-        return ((a - b) / b) * 100;
-      }
-
-      function saveTokens() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(tokens));
-      }
-
-      function loadTokens() {
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          tokens = raw ? JSON.parse(raw) : [];
-        } catch {
-          tokens = [];
-        }
-      }
-
-      const menuToggle = document.getElementById("menuToggle");
-      const tabToggle = document.getElementById("tabToggle");
-      const trackerView = document.getElementById("trackerView");
-      const totView = document.getElementById("totView");
-      const addTokenBtn = document.getElementById("addTokenBtn");
-      const refreshPricesBtn = document.getElementById("refreshPricesBtn");
-      const tokenFormPanel = document.getElementById("tokenFormPanel");
-      const closeFormBtn = document.getElementById("closeFormBtn");
-      const tokenForm = document.getElementById("tokenForm");
-      const quickSelect = document.getElementById("quickSelect");
-      const coinNameInput = document.getElementById("coinName");
-      const coinSymbolInput = document.getElementById("coinSymbol");
-      const buyPriceInput = document.getElementById("buyPrice");
-      const amountHeldInput = document.getElementById("amountHeld");
-      const tokenTableBody = document.getElementById("tokenTableBody");
-      const emptyState = document.getElementById("emptyState");
-      const totSummary = document.getElementById("totSummary");
-      const totCards = document.getElementById("totCards");
-
-      menuToggle.addEventListener("click", () => {
-        const collapsed = tabToggle.classList.toggle("collapsed");
-        menuToggle.textContent = collapsed ? "Menu" : "Collapse";
+      hamburger.addEventListener("click", () => {
+        menuOverlay.classList.add("active");
       });
 
-      tabToggle.addEventListener("click", (e) => {
-        const btn = e.target.closest(".tab-btn");
-        if (!btn) return;
-        const view = btn.dataset.view;
-        document
-          .querySelectorAll(".tab-btn")
-          .forEach((b) => b.classList.toggle("active", b === btn));
-
-        if (view === "tracker") {
-          trackerView.classList.add("active");
-          totView.classList.remove("active");
-        } else {
-          trackerView.classList.remove("active");
-          totView.classList.add("active");
-        }
+      menuClose.addEventListener("click", () => {
+        menuOverlay.classList.remove("active");
       });
 
-      addTokenBtn.addEventListener("click", () => {
-        tokenFormPanel.classList.remove("hidden");
-        addTokenBtn.style.display = "none";
+      document.querySelectorAll(".menu-item").forEach((item) => {
+        item.addEventListener("click", () => {
+          const view = item.dataset.view;
+          showView(view);
+          menuOverlay.classList.remove("active");
+        });
       });
 
-      closeFormBtn.addEventListener("click", () => {
-        tokenFormPanel.classList.add("hidden");
-        addTokenBtn.style.display = "";
-      });
-
-      quickSelect.addEventListener("change", (e) => {
-        const value = e.target.value;
-        if (!value) return;
-        const match = marketsCache.find((c) => c.id === value);
-        if (!match) return;
-        coinNameInput.value = match.name;
-        coinSymbolInput.value = match.symbol.toUpperCase();
-        buyPriceInput.value = match.current_price;
-      });
-
-      tokenForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-
-        const name = coinNameInput.value.trim();
-        const symbol = coinSymbolInput.value.trim().toUpperCase();
-        const buyPrice = parseFloat(buyPriceInput.value);
-        const amount = parseFloat(amountHeldInput.value);
-
-        if (!name || !symbol || !buyPrice || !amount) return;
-
-        const market = marketsCache.find(
-          (c) =>
-            c.symbol.toUpperCase() === symbol ||
-            c.name.toLowerCase() === name.toLowerCase()
+      /* ----------------------------
+         VIEW SWITCHING
+      ---------------------------- */
+      function showView(view) {
+        document.querySelectorAll(".view").forEach((v) =>
+          v.classList.remove("active")
         );
-        const lastPrice = market ? market.current_price : buyPrice;
-
-        const totalCost = buyPrice * amount;
-        const id = Date.now().toString();
-
-        tokens.push({
-          id,
-          name,
-          symbol,
-          buyPrice,
-          amount,
-          totalCost,
-          lastPrice,
-          lastUpdated: new Date().toISOString().slice(0, 19),
-        });
-
-        saveTokens();
-        renderTokens();
-        tokenForm.reset();
-        quickSelect.value = "";
-        tokenFormPanel.classList.add("hidden");
-        addTokenBtn.style.display = "";
-      });
-
-      tokenTableBody.addEventListener("click", (e) => {
-        if (!e.target.matches("[data-delete]")) return;
-        const id = e.target.dataset.delete;
-        tokens = tokens.filter((t) => t.id !== id);
-        saveTokens();
-        renderTokens();
-      });
-
-      refreshPricesBtn.addEventListener("click", async () => {
-        if (!tokens.length) return;
-        await ensureMarkets();
-        tokens = tokens.map((t) => {
-          const match = marketsCache.find(
-            (m) =>
-              m.symbol.toUpperCase() === t.symbol ||
-              m.name.toLowerCase() === t.name.toLowerCase()
-          );
-          if (match) {
-            return {
-              ...t,
-              lastPrice: match.current_price,
-              lastUpdated: new Date().toISOString().slice(0, 19),
-            };
-          }
-          return t;
-        });
-        saveTokens();
-        renderTokens();
-      });
-
-      function renderTokens() {
-        tokenTableBody.innerHTML = "";
-        if (!tokens.length) {
-          emptyState.style.display = "block";
-        } else {
-          emptyState.style.display = "none";
-        }
-
-        tokens.forEach((t) => {
-          const row = document.createElement("tr");
-
-          const currentValue = t.lastPrice * t.amount;
-          const pnlValue = currentValue - t.totalCost;
-          const pnlPercent = pct(currentValue, t.totalCost);
-
-          row.innerHTML = `
-            <td>
-              <div class="token-name">${t.name}</div>
-              <div class="token-symbol">${t.symbol}</div>
-            </td>
-            <td>${formatMoney(t.buyPrice)}</td>
-            <td>${formatNumber(t.amount)}</td>
-            <td>${formatMoney(t.totalCost)}</td>
-            <td>${formatMoney(t.lastPrice)}</td>
-            <td>${formatMoney(currentValue)}</td>
-            <td class="${
-              pnlValue >= 0 ? "token-pnl-positive" : "token-pnl-negative"
-            }">
-              ${
-                pnlPercent == null
-                  ? "—"
-                  : pnlPercent.toFixed(2).toString() + "%"
-              }
-            </td>
-            <td class="row-actions">
-              <button data-delete="${t.id}" title="Delete">✕</button>
-            </td>
-          `;
-          tokenTableBody.appendChild(row);
-        });
-
-        renderTotals();
+        document.getElementById(view + "View").classList.add("active");
       }
 
-      function renderTotals() {
-        let totalCost = 0;
-        let totalValue = 0;
-
-        tokens.forEach((t) => {
-          totalCost += t.totalCost;
-          totalValue += t.lastPrice * t.amount;
-        });
-
-        const pnlValue = totalValue - totalCost;
-        const pnlPercent = pct(totalValue, totalCost);
-
-        totSummary.innerHTML = `
-          <div class="tot-summary-row">
-            <span>Total cost basis</span>
-            <span>${formatMoney(totalCost)}</span>
-          </div>
-          <div class="tot-summary-row">
-            <span>Current value</span>
-            <span>${formatMoney(totalValue)}</span>
-          </div>
-          <div class="tot-summary-row">
-            <span>Overall P/L</span>
-            <span class="${
-              pnlValue >= 0 ? "token-pnl-positive" : "token-pnl-negative"
-            }">
-              ${formatMoney(pnlValue)} ${
-          pnlPercent == null ? "" : " (" + pnlPercent.toFixed(2) + "%)"
-        }
-            </span>
-          </div>
-        `;
-
-        totCards.innerHTML = "";
-        tokens.forEach((t) => {
-          const currentValue = t.lastPrice * t.amount;
-          const pnlValue = currentValue - t.totalCost;
-          const pnlPercent = pct(currentValue, t.totalCost);
-
-          const card = document.createElement("div");
-          card.className = "tot-card";
-          card.innerHTML = `
-            <div class="tot-card-header">
-              <div>
-                <div class="tot-card-name">${t.name}</div>
-                <div class="tot-card-symbol">${t.symbol}</div>
-              </div>
-              <div class="${
-                pnlValue >= 0 ? "token-pnl-positive" : "token-pnl-negative"
-              }">
-                ${formatMoney(pnlValue)} ${
-            pnlPercent == null ? "" : " (" + pnlPercent.toFixed(1) + "%)"
-          }
-              </div>
-            </div>
-            <div class="tot-card-row">
-              <span>Amount</span> • <span>${formatNumber(t.amount)}</span>
-            </div>
-            <div class="tot-card-row">
-              <span>Entry</span> • <span>${formatMoney(t.buyPrice)}</span>
-            </div>
-            <div class="tot-card-row">
-              <span>Last price</span> • <span>${formatMoney(t.lastPrice)}</span>
-            </div>
-            <div class="tot-card-row">
-              <span>Current value</span> • <span>${formatMoney(
-                currentValue
-              )}</span>
-            </div>
-          `;
-          totCards.appendChild(card);
-        });
-      }
-
-      async function ensureMarkets() {
-        if (marketsCache.length) return;
-        try {
-          const res = await fetch(
-            "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=150&page=1&sparkline=false"
-          );
-          if (!res.ok) throw new Error("failed");
-          const data = await res.json();
-          marketsCache = data;
-          populateQuickSelect();
-        } catch (e) {
-          console.warn("Unable to load CoinGecko markets", e);
-        }
-      }
-
-      function populateQuickSelect() {
-        if (!marketsCache.length) return;
-        marketsCache.forEach((coin) => {
-          const opt = document.createElement("option");
-          opt.value = coin.id;
-          opt.textContent = `${coin.name} (${coin.symbol.toUpperCase()})`;
-          quickSelect.appendChild(opt);
-        });
-      }
-
-      (async function init() {
-        loadTokens();
-        renderTokens();
-        await ensureMarkets();
-      })();
+      // Default to TOT
+      showView("tot");
     </script>
   </body>
 </html>
