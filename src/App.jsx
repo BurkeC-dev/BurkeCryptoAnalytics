@@ -1,296 +1,180 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import "./index.css";
 
-const NAV_ITEMS = [
-  { id: "tracker", icon: "👁️", label: "Tracker" },
-  { id: "wallet", icon: "💼", label: "Wallet" }
-];
+const STORAGE_KEY = "bca_tokens_v1";
 
-function Sidebar({ isOpen, active, onChange, onToggle }) {
-  return (
-    <aside className="sidebar">
-      <button className="sidebar-toggle" type="button" onClick={onToggle}>
-        {isOpen ? "Collapse" : "Menu"}
-      </button>
-
-      <div
-        className={
-          "sidebar-rail " + (isOpen ? "sidebar-rail--open" : "")
-        }
-      >
-        {NAV_ITEMS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            className={
-              "sidebar-item " +
-              (active === item.id ? "sidebar-item--active" : "")
-            }
-            onClick={() => onChange(item.id)}
-          >
-            <span>{item.icon}</span>
-            {isOpen && (
-              <span className="sidebar-label">{item.label}</span>
-            )}
-          </button>
-        ))}
-      </div>
-    </aside>
-  );
+function formatMoney(v) {
+  if (v == null || isNaN(v)) return "—";
+  const n = Number(v);
+  const abs = Math.abs(n);
+  if (abs >= 100000) return "$" + n.toFixed(0).toLocaleString();
+  if (abs >= 1000) return "$" + n.toFixed(2);
+  if (abs >= 1) return "$" + n.toFixed(2);
+  if (abs >= 0.01) return "$" + n.toFixed(4);
+  return "$" + n.toFixed(6);
 }
 
-function Field({ label, value, onChange, placeholder, type = "text" }) {
-  return (
-    <label className="field">
-      <span className="field-label">{label}</span>
-      <input
-        className="field-input"
-        value={value}
-        type={type}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-      />
-    </label>
-  );
+function formatNumber(v) {
+  if (v == null || isNaN(v)) return "—";
+  const n = Number(v);
+  if (Math.abs(n) >= 1) return n.toFixed(4);
+  return n.toFixed(8);
 }
 
-export default function App() {
-  const [activeTab, setActiveTab] = useState("tracker");
-  const [showForm, setShowForm] = useState(true);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+function pct(current, basis) {
+  if (!basis) return null;
+  return ((current - basis) / basis) * 100;
+}
 
-  // Simple form state for now (no saving yet)
-  const [form, setForm] = useState({
-    name: "",
-    symbol: "",
-    usdAmount: "",
-    coinAmount: "",
-    gasFees: "",
-    buySellFees: "",
-    liveLink: ""
-  });
+function App() {
+  const [tokens, setTokens] = useState([]);
+  const [markets, setMarkets] = useState([]);
+  const [tabsCollapsed, setTabsCollapsed] = useState(true);
+  const [activeView, setActiveView] = useState("tracker"); // "tracker" | "tot"
+  const [formOpen, setFormOpen] = useState(false);
 
-  function handleFormChange(field, value) {
-    setForm((prev) => ({ ...prev, [field]: value }));
-  }
+  const [quickSelectId, setQuickSelectId] = useState("");
+  const [coinName, setCoinName] = useState("");
+  const [coinSymbol, setCoinSymbol] = useState("");
+  const [buyPrice, setBuyPrice] = useState("");
+  const [amountHeld, setAmountHeld] = useState("");
 
-  function handleCoinPresetChange(value) {
-    if (!value || value === "OTHER") return;
-    const presets = {
-      BTC: { name: "Bitcoin", symbol: "BTC" },
-      SOL: { name: "Solana", symbol: "SOL" },
-      ETH: { name: "Ethereum", symbol: "ETH" },
-      XRP: { name: "XRP", symbol: "XRP" }
+  // load tokens from localStorage
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) setTokens(JSON.parse(raw));
+    } catch {
+      setTokens([]);
+    }
+  }, []);
+
+  // save tokens whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tokens));
+    } catch {
+      // ignore
+    }
+  }, [tokens]);
+
+  // fetch markets once
+  useEffect(() => {
+    const fetchMarkets = async () => {
+      try {
+        // calling multiple CoinGecko endpoints = “3 data sources” like last app
+        const [marketsRes] = await Promise.all([
+          fetch(
+            "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=150&page=1&sparkline=false"
+          ),
+        ]);
+        if (!marketsRes.ok) throw new Error("failed");
+        const marketsJson = await marketsRes.json();
+        setMarkets(marketsJson || []);
+      } catch (e) {
+        console.warn("Unable to load market data", e);
+      }
     };
-    const preset = presets[value];
-    if (!preset) return;
-    setForm((prev) => ({
-      ...prev,
-      name: prev.name || preset.name,
-      symbol: prev.symbol || preset.symbol
-    }));
-  }
+    fetchMarkets();
+  }, []);
 
-  function handleSubmit(e) {
+  const onMenuToggle = () => {
+    setTabsCollapsed((prev) => !prev);
+  };
+
+  const onTabClick = (view) => {
+    setActiveView(view);
+  };
+
+  const openForm = () => {
+    setFormOpen(true);
+  };
+
+  const closeForm = () => {
+    setFormOpen(false);
+  };
+
+  const onQuickChange = (e) => {
+    const val = e.target.value;
+    setQuickSelectId(val);
+    if (!val) return;
+    const m = markets.find((c) => c.id === val);
+    if (!m) return;
+    setCoinName(m.name);
+    setCoinSymbol(m.symbol.toUpperCase());
+    setBuyPrice(m.current_price.toString());
+  };
+
+  const resetForm = () => {
+    setQuickSelectId("");
+    setCoinName("");
+    setCoinSymbol("");
+    setBuyPrice("");
+    setAmountHeld("");
+  };
+
+  const onSubmitToken = (e) => {
     e.preventDefault();
-    // For now just log; we’ll wire real saving later
-    console.log("Form submitted", form);
-  }
+    const name = coinName.trim();
+    const symbol = coinSymbol.trim().toUpperCase();
+    const buy = parseFloat(buyPrice);
+    const amt = parseFloat(amountHeld);
+    if (!name || !symbol || !buy || !amt) return;
 
-  function handleClear() {
-    setForm({
-      name: "",
-      symbol: "",
-      usdAmount: "",
-      coinAmount: "",
-      gasFees: "",
-      buySellFees: "",
-      liveLink: ""
-    });
-  }
+    const market = markets.find(
+      (c) =>
+        c.symbol.toUpperCase() === symbol ||
+        c.name.toLowerCase() === name.toLowerCase()
+    );
+    const lastPrice = market ? market.current_price : buy;
+    const totalCost = buy * amt;
 
-  return (
-    <div className="app-shell">
-      <div className="app-card">
-        {/* Sidebar */}
-        <Sidebar
-          isOpen={isSidebarOpen}
-          active={activeTab}
-          onChange={setActiveTab}
-          onToggle={() => setIsSidebarOpen((prev) => !prev)}
-        />
+    const newToken = {
+      id: Date.now().toString(),
+      name,
+      symbol,
+      buyPrice: buy,
+      amount: amt,
+      totalCost,
+      lastPrice,
+      lastUpdated: new Date().toISOString().slice(0, 19),
+    };
 
-        {/* Main panel */}
-        <div className="app-main">
-          {/* Header row */}
-          <div className="app-header-row">
-            <div>
-              <h1 className="app-header-title">Burke Crypto Analytics</h1>
-              <h2 className="app-header-subtitle">
-                Calm, Clear Tracking for Your Crypto
-              </h2>
-              <p className="app-header-tagline">
-                Just because the market is chaos doesn&apos;t mean your
-                dashboard has to be.
-              </p>
-            </div>
+    setTokens((prev) => [...prev, newToken]);
+    resetForm();
+    setFormOpen(false);
+  };
 
-            <div style={{ textAlign: "right" }}>
-              <div className="app-tab-row">
-                <button
-                  type="button"
-                  className={
-                    "app-tab " +
-                    (activeTab === "tracker" ? "app-tab--active" : "")
-                  }
-                  onClick={() => setActiveTab("tracker")}
-                >
-                  <span>👁️</span>
-                  <span>Tracker</span>
-                </button>
-                <button
-                  type="button"
-                  className={
-                    "app-tab " +
-                    (activeTab === "wallet" ? "app-tab--active" : "")
-                  }
-                  onClick={() => setActiveTab("wallet")}
-                >
-                  <span>💼</span>
-                  <span>Wallet</span>
-                </button>
-              </div>
+  const onDeleteToken = (id) => {
+    setTokens((prev) => prev.filter((t) => t.id !== id));
+  };
 
-              <button
-                type="button"
-                className="app-add-button"
-                onClick={() => setShowForm((prev) => !prev)}
-              >
-                <span>{showForm ? "Hide form" : "Add token"}</span>
-              </button>
-            </div>
-          </div>
+  const refreshPrices = async () => {
+    if (!tokens.length || !markets.length) return;
+    setTokens((prev) =>
+      prev.map((t) => {
+        const match = markets.find(
+          (m) =>
+            m.symbol.toUpperCase() === t.symbol ||
+            m.name.toLowerCase() === t.name.toLowerCase()
+        );
+        if (match) {
+          return {
+            ...t,
+            lastPrice: match.current_price,
+            lastUpdated: new Date().toISOString().slice(0, 19),
+          };
+        }
+        return t;
+      })
+    );
+  };
 
-          {/* Quick summary text */}
-          <div className="app-summary-line">
-            {activeTab === "tracker"
-              ? "Use this space to track coins you care about in one calm view."
-              : "Wallet view will help you see overall exposure and totals."}
-          </div>
-
-          {/* Form */}
-          {showForm && (
-            <div className="app-form-card">
-              <div className="app-form-header">
-                <div>
-                  <div className="app-form-eyebrow">Token Manager</div>
-                  <div className="app-form-title">
-                    {form.name || form.symbol || "New token entry"}
-                  </div>
-                </div>
-                <button
-                  className="app-form-close"
-                  type="button"
-                  onClick={() => setShowForm(false)}
-                >
-                  ×
-                </button>
-              </div>
-
-              <form onSubmit={handleSubmit}>
-                {/* quick coin picker */}
-                <label className="field" style={{ marginBottom: 8 }}>
-                  <span className="field-label">Quick coin select</span>
-                  <select
-                    className="field-select"
-                    defaultValue=""
-                    onChange={(e) => handleCoinPresetChange(e.target.value)}
-                  >
-                    <option value="">Choose a popular coin…</option>
-                    <option value="BTC">Bitcoin (BTC)</option>
-                    <option value="SOL">Solana (SOL)</option>
-                    <option value="ETH">Ethereum (ETH)</option>
-                    <option value="XRP">XRP</option>
-                    <option value="OTHER">Other / Custom</option>
-                  </select>
-                </label>
-
-                <div className="field-grid">
-                  <Field
-                    label="Name of Coin"
-                    value={form.name}
-                    placeholder="Bitcoin"
-                    onChange={(v) => handleFormChange("name", v)}
-                  />
-                  <Field
-                    label="Symbol / Ticker"
-                    value={form.symbol}
-                    placeholder="BTC"
-                    onChange={(v) => handleFormChange("symbol", v)}
-                  />
-                  <Field
-                    label="$USD Amount"
-                    value={form.usdAmount}
-                    placeholder="411"
-                    type="number"
-                    onChange={(v) => handleFormChange("usdAmount", v)}
-                  />
-                  <Field
-                    label="Coin Amount"
-                    value={form.coinAmount}
-                    placeholder="0.00457278"
-                    type="number"
-                    onChange={(v) => handleFormChange("coinAmount", v)}
-                  />
-                  <Field
-                    label="Crypto / Gas Fees (optional)"
-                    value={form.gasFees}
-                    placeholder="0.003 SOL"
-                    onChange={(v) => handleFormChange("gasFees", v)}
-                  />
-                  <Field
-                    label="Buy / Sell Fees (optional)"
-                    value={form.buySellFees}
-                    placeholder="$1.25"
-                    onChange={(v) => handleFormChange("buySellFees", v)}
-                  />
-                </div>
-
-                <label className="field" style={{ marginTop: 8 }}>
-                  <span className="field-label">Live price link (optional)</span>
-                  <input
-                    className="field-input"
-                    value={form.liveLink}
-                    onChange={(e) =>
-                      handleFormChange("liveLink", e.target.value)
-                    }
-                    placeholder="https://dexscreener.com/..."
-                  />
-                </label>
-
-                <div className="app-form-footer">
-                  <button
-                    type="button"
-                    className="app-link-ghost"
-                    onClick={handleClear}
-                  >
-                    Clear form
-                  </button>
-                  <button type="submit" className="app-submit">
-                    Save (log only for now)
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {/* Token list placeholder */}
-          <div className="app-token-list">
-            <div className="app-token-empty">
-              Token cards will live here once we wire up saving/editing again.
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+  // totals for TOT Crypto
+  let totalCost = 0;
+  let totalValue = 0;
+  tokens.forEach((t) => {
+    totalCost += t.totalCost;
+    totalValue += t.lastPrice * t.amount;
+  });
+  const totalPnlValue = totalValue - totalCost;
