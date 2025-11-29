@@ -42,12 +42,8 @@
       box-shadow: 0 3px 6px rgba(113,197,255,0.6);
     }
 
-    /* HIDDEN UTILITY */
-    .hidden {
-      display: none;
-    }
+    .hidden { display: none; }
 
-    /* RESET */
     * {
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
@@ -62,7 +58,6 @@
       overflow-x: hidden;
     }
 
-    /* APP SHELL */
     .app-shell {
       max-width: 480px;
       margin: 0 auto;
@@ -73,14 +68,12 @@
       box-shadow: 0 24px 80px rgba(0,0,0,0.45);
     }
 
-    /* HEADER */
     .top-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
 
-    /* HAMBURGER */
     .hamburger {
       width: 32px;
       height: 24px;
@@ -109,7 +102,6 @@
       margin-right: 18px;
     }
 
-    /* FULL SCREEN MENU */
     .menu-overlay {
       position: fixed;
       top: 0;
@@ -122,11 +114,8 @@
       z-index: 999;
       padding: 1.5rem;
     }
-    .menu-overlay.active {
-      left: 0;
-    }
+    .menu-overlay.active { left: 0; }
 
-    /* Glowing X */
     .menu-close {
       position: absolute;
       top: 1rem;
@@ -152,7 +141,6 @@
       color: var(--lavender);
     }
 
-    /* MENU ITEMS */
     .menu-items {
       margin-top: 3.5rem;
       text-align: center;
@@ -179,7 +167,6 @@
       box-shadow: 0 3px 6px rgba(113,197,255,0.6);
     }
 
-    /* CARD */
     .card {
       margin-top: 1rem;
       padding: 1.3rem 1.2rem;
@@ -188,15 +175,9 @@
       border: 1px solid rgba(140,155,255,0.3);
     }
 
-    /* PAGE VIEWS */
-    .page-view {
-      display: none;
-    }
-    .page-view.active {
-      display: block;
-    }
+    .page-view { display: none; }
+    .page-view.active { display: block; }
 
-    /* PAGE TITLES */
     .page-title {
       font-family: "Playfair Display", serif;
       font-size: 1.4rem;
@@ -214,7 +195,6 @@
       font-size: .8rem;
     }
 
-    /* BUTTONS */
     .primary-pill {
       background: linear-gradient(135deg, #bfa8ff, #71c5ff);
       color: #06061a;
@@ -237,7 +217,6 @@
       cursor: pointer;
     }
 
-    /* TOKEN FORM PANEL */
     .token-form {
       margin-top: 1rem;
       padding: 1rem;
@@ -278,10 +257,7 @@
       margin-bottom: 0.7rem;
     }
 
-    /* FORM ELEMENTS */
-    .form-row {
-      margin-bottom: 0.6rem;
-    }
+    .form-row { margin-bottom: 0.6rem; }
     .form-label {
       display: block;
       font-size: 0.75rem;
@@ -305,7 +281,6 @@
       color: rgba(169,176,214,0.7);
     }
 
-    /* TABLE AREA */
     .table-wrapper {
       margin-top: 1rem;
       padding: .8rem;
@@ -332,21 +307,14 @@
       }
     }
 
-    .token-name {
-      font-weight: 600;
-    }
+    .token-name { font-weight: 600; }
     .token-meta {
       color: var(--text-muted);
       font-size: 0.72rem;
     }
-    .token-pnl-positive {
-      color: var(--success);
-    }
-    .token-pnl-negative {
-      color: var(--danger);
-    }
+    .token-pnl-positive { color: var(--success); }
+    .token-pnl-negative { color: var(--danger); }
 
-    /* TOT cards (for later) */
     .tot-card {
       background: rgba(20,22,45,0.9);
       border: 1px solid rgba(140,155,255,0.35);
@@ -441,12 +409,12 @@
 
             <div class="form-row">
               <label class="form-label" for="buyPrice">Your buy price (per coin, USD)</label>
-              <input id="buyPrice" class="token-input" type="number" min="0" step="0.00000001" placeholder="e.g. 42000" required />
+              <input id="buyPrice" class="token-input" type="number" min="0" step="0.00000001" placeholder="e.g. 0.00457278" required />
             </div>
 
             <div class="form-row">
-              <label class="form-label" for="coinAmount">Amount of coin</label>
-              <input id="coinAmount" class="token-input" type="number" min="0" step="0.00000001" placeholder="e.g. 0.25" required />
+              <label class="form-label" for="totalSpent">Total spent (USD)</label>
+              <input id="totalSpent" class="token-input" type="number" min="0" step="0.01" placeholder="e.g. 411" required />
             </div>
 
             <div class="form-row" style="margin-top:0.8rem;">
@@ -488,7 +456,6 @@
       });
     });
 
-    /* VIEW SWITCHING */
     function showView(viewName) {
       document.querySelectorAll(".page-view").forEach(sec =>
         sec.classList.remove("active")
@@ -496,23 +463,22 @@
       document.getElementById(viewName + "View").classList.add("active");
     }
 
-    /* Default page = Overview */
     showView("overview");
 
     /* TOKEN FORM + TRACKER LOGIC */
-    const addTokenBtn = document.getElementById("addTokenBtn");
-    const tokenForm = document.getElementById("tokenForm");
-    const tokenFormClose = document.getElementById("tokenFormClose");
+    const addTokenBtn      = document.getElementById("addTokenBtn");
+    const tokenForm        = document.getElementById("tokenForm");
+    const tokenFormClose   = document.getElementById("tokenFormClose");
     const tokenFormElement = document.getElementById("tokenFormElement");
 
-    const quickCoinSelect = document.getElementById("quickCoinSelect");
-    const coinNameInput = document.getElementById("coinName");
-    const coinSymbolInput = document.getElementById("coinSymbol");
-    const buyPriceInput = document.getElementById("buyPrice");
-    const coinAmountInput = document.getElementById("coinAmount");
+    const quickCoinSelect  = document.getElementById("quickCoinSelect");
+    const coinNameInput    = document.getElementById("coinName");
+    const coinSymbolInput  = document.getElementById("coinSymbol");
+    const buyPriceInput    = document.getElementById("buyPrice");
+    const totalSpentInput  = document.getElementById("totalSpent");
 
-    const tokenTableBody = document.getElementById("tokenTableBody");
-    const emptyState = document.getElementById("emptyState");
+    const tokenTableBody   = document.getElementById("tokenTableBody");
+    const emptyState       = document.getElementById("emptyState");
 
     const tokens = [];
 
@@ -614,27 +580,30 @@
     tokenFormElement.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const name = coinNameInput.value.trim();
-      const symbol = coinSymbolInput.value.trim().toUpperCase();
-      const buyPrice = parseFloat(buyPriceInput.value);
-      const amount = parseFloat(coinAmountInput.value);
+      const name       = coinNameInput.value.trim();
+      const symbol     = coinSymbolInput.value.trim().toUpperCase();
+      const buyPrice   = parseFloat(buyPriceInput.value);
+      const totalSpent = parseFloat(totalSpentInput.value);
 
-      if (!name || !symbol || isNaN(buyPrice) || isNaN(amount)) {
+      if (!name || !symbol || isNaN(buyPrice) || isNaN(totalSpent)) {
         alert("Please fill out all fields with valid values.");
         return;
       }
 
+      const amount = totalSpent / buyPrice;  // auto-calculated tokens
+
       let lastPrice = await fetchCurrentPrice(symbol);
       if (lastPrice === null) lastPrice = buyPrice;
 
-      const cost = buyPrice * amount;
+      const cost  = totalSpent;
       const value = lastPrice * amount;
-      const pnl = value - cost;
+      const pnl   = value - cost;
 
       tokens.push({
         name,
         symbol,
         buyPrice,
+        totalSpent,
         amount,
         lastPrice,
         cost,
