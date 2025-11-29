@@ -20,14 +20,12 @@
       --danger: #ff5c8a;
     }
 
-    /* SOFT GLOW */
     .soft-glow {
       text-shadow:
         0 0 2px var(--blue),
         0 0 6px rgba(113,197,255,0.7);
     }
 
-    /* DOWN-GLOW UNDERLINE */
     .underline-soft {
       position: relative;
     }
@@ -377,7 +375,7 @@
             <div>
               <div class="token-form-title">New token entry</div>
               <div class="token-form-subtext">
-                Choose a coin, set your entry, we’ll track the rest.
+                Choose a coin, log your entry, we’ll track the rest.
               </div>
             </div>
             <button class="token-form-close" id="tokenFormClose">×</button>
@@ -408,8 +406,8 @@
             </div>
 
             <div class="form-row">
-              <label class="form-label" for="buyPrice">Your buy price (per coin, USD)</label>
-              <input id="buyPrice" class="token-input" type="number" min="0" step="0.00000001" placeholder="e.g. 0.00457278" required />
+              <label class="form-label" id="amountLabel" for="coinAmount">Amount of coin bought</label>
+              <input id="coinAmount" class="token-input" type="number" min="0" step="0.00000001" placeholder="e.g. 0.00031829" required />
             </div>
 
             <div class="form-row">
@@ -437,9 +435,9 @@
 
   <script>
     /* MENU BEHAVIOR */
-    const hamburger = document.getElementById("hamburger");
-    const menuOverlay = document.getElementById("menuOverlay");
-    const menuClose = document.getElementById("menuClose");
+    const hamburger    = document.getElementById("hamburger");
+    const menuOverlay  = document.getElementById("menuOverlay");
+    const menuClose    = document.getElementById("menuClose");
 
     hamburger.addEventListener("click", () => {
       menuOverlay.classList.add("active");
@@ -474,7 +472,8 @@
     const quickCoinSelect  = document.getElementById("quickCoinSelect");
     const coinNameInput    = document.getElementById("coinName");
     const coinSymbolInput  = document.getElementById("coinSymbol");
-    const buyPriceInput    = document.getElementById("buyPrice");
+    const amountLabel      = document.getElementById("amountLabel");
+    const coinAmountInput  = document.getElementById("coinAmount");
     const totalSpentInput  = document.getElementById("totalSpent");
 
     const tokenTableBody   = document.getElementById("tokenTableBody");
@@ -501,13 +500,25 @@
       addTokenBtn.style.display = "inline-block";
     });
 
+    function updateAmountLabel() {
+      const sym = coinSymbolInput.value.trim().toUpperCase();
+      if (sym) {
+        amountLabel.textContent = `${sym} bought`;
+      } else {
+        amountLabel.textContent = "Amount of coin bought";
+      }
+    }
+
     quickCoinSelect.addEventListener("change", (e) => {
       const value = e.target.value;
       if (!value) return;
       const [id, sym, name] = value.split("|");
       coinNameInput.value = name;
       coinSymbolInput.value = sym;
+      updateAmountLabel();
     });
+
+    coinSymbolInput.addEventListener("input", updateAmountLabel);
 
     async function fetchCurrentPrice(symbol) {
       const upper = symbol.toUpperCase();
@@ -582,15 +593,15 @@
 
       const name       = coinNameInput.value.trim();
       const symbol     = coinSymbolInput.value.trim().toUpperCase();
-      const buyPrice   = parseFloat(buyPriceInput.value);
+      const amount     = parseFloat(coinAmountInput.value);
       const totalSpent = parseFloat(totalSpentInput.value);
 
-      if (!name || !symbol || isNaN(buyPrice) || isNaN(totalSpent)) {
+      if (!name || !symbol || isNaN(amount) || isNaN(totalSpent) || amount <= 0) {
         alert("Please fill out all fields with valid values.");
         return;
       }
 
-      const amount = totalSpent / buyPrice;  // auto-calculated tokens
+      const buyPrice = totalSpent / amount;
 
       let lastPrice = await fetchCurrentPrice(symbol);
       if (lastPrice === null) lastPrice = buyPrice;
@@ -602,9 +613,9 @@
       tokens.push({
         name,
         symbol,
-        buyPrice,
+        amount,      // full precision
         totalSpent,
-        amount,
+        buyPrice,
         lastPrice,
         cost,
         value,
@@ -615,6 +626,7 @@
 
       tokenFormElement.reset();
       quickCoinSelect.value = "";
+      amountLabel.textContent = "Amount of coin bought";
       tokenForm.classList.add("hidden");
       addTokenBtn.style.display = "inline-block";
     });
