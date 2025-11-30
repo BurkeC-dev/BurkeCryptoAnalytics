@@ -10,9 +10,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
     :root {
       --lavender: #dcd0ff;
@@ -207,26 +204,6 @@
       margin: 1.1rem 0 0.4rem;
     }
 
-    .chart-card {
-      margin-top: 0.35rem;
-      padding: 0.9rem 0.85rem 0.8rem;
-      background: rgba(6,8,26,0.95);
-      border-radius: 18px;
-      border: 1px solid rgba(104,122,255,0.4);
-    }
-
-    .chart-wrapper {
-      position: relative;
-      width: 100%;
-      max-width: 100%;
-      margin-top: 0.4rem;
-    }
-
-    .chart-wrapper canvas {
-      width: 100% !important;
-      max-height: 240px;
-    }
-
     .token-chart-card {
       margin-top: 0.75rem;
       padding: 0.9rem 0.85rem 0.8rem;
@@ -253,24 +230,27 @@
       color: var(--text-muted);
     }
 
-    .widget-wrapper {
+    /* Cropped, zoomed widget area */
+    .chart-wrapper {
       position: relative;
       width: 100%;
       max-width: 100%;
+      height: 210px;               /* visible window */
       border-radius: 16px;
       overflow: hidden;
       border: 1px solid rgba(140,155,255,0.4);
       box-shadow:
-        0 10px 24px rgba(0,0,0,0.7),
+        0 10px 24px rgba(0,0,0,0.8),
         0 0 6px rgba(113,197,255,0.35);
-      margin-top: 0.5rem;
+      background: #050716;
     }
 
     .chart-frame {
       width: 100%;
-      height: 220px;
+      height: 330px;               /* taller than wrapper so we can crop */
       border: none;
       display: block;
+      transform: translateY(-60px); /* move the widget up = hide header */
     }
 
     .empty-state {
@@ -290,7 +270,7 @@
     .hint {
       font-size: 0.7rem;
       color: var(--text-muted);
-      margin-top: 0.3rem;
+      margin-top: 0.25rem;
     }
   </style>
 </head>
@@ -323,26 +303,15 @@
     <main class="card">
       <h2 class="page-title underline-soft">Charts</h2>
       <p class="view-description">
-        Portfolio line from CoinGecko, plus per-token CoinGecko lines and GeckoTerminal widgets where you’ve set a token address.
+        Live GeckoTerminal widgets for each tracked token using your saved Solana token addresses, cropped to show mostly the clean chart.
       </p>
       <p class="last-updated" id="lastUpdatedText"></p>
 
-      <!-- PORTFOLIO CHART -->
-      <div class="chart-section-title">Portfolio (Last 5 Days)</div>
-      <div class="chart-card">
-        <div class="chart-wrapper" id="portfolioWrapper">
-          <canvas id="portfolioChart"></canvas>
-        </div>
-        <div class="empty-state" id="portfolioEmpty" style="display:none;">
-          <strong>No chart data yet.</strong> Add tokens in the <em>Tracker</em> tab and we’ll show your last 5 days of total value here.
-        </div>
-      </div>
-
-      <!-- TOKEN CHARTS -->
-      <div class="chart-section-title">Tokens</div>
+      <div class="chart-section-title">Token charts</div>
       <div id="tokenChartsContainer"></div>
       <div class="empty-state" id="tokensEmpty" style="display:none;">
-        <strong>No tokens to chart.</strong> Add tokens in the <em>Tracker</em> tab first.
+        <strong>No tokens to chart.</strong> Add tokens in the <em>Tracker</em> tab, and set a
+        <em>GeckoTerminal token address</em> in the advanced section to see a live chart here.
       </div>
     </main>
   </div>
@@ -367,29 +336,12 @@
 
     // ====== CONFIG ======
     const STORAGE_KEY   = "bca_tokens_v1";
-    const DAYS_BACK     = 5;
-    const REFRESH_MS    = 60000;
     const GECKO_NETWORK = "solana";
 
-    const COINGECKO_MAP = {
-      BTC: "bitcoin",
-      ETH: "ethereum",
-      SOL: "solana",
-      XRP: "ripple",
-      DOGE: "dogecoin",
-      ADA: "cardano"
-    };
-
     const lastUpdatedText      = document.getElementById("lastUpdatedText");
-    const portfolioWrapper     = document.getElementById("portfolioWrapper");
-    const portfolioEmpty       = document.getElementById("portfolioEmpty");
     const tokenChartsContainer = document.getElementById("tokenChartsContainer");
     const tokensEmpty          = document.getElementById("tokensEmpty");
 
-    let portfolioChartInstance = null;
-    let tokenChartInstances    = [];
-
-    // ====== HELPERS ======
     function loadTokens() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -405,51 +357,8 @@
         name: token.name || token.tokenName || token.symbol || "Unknown",
         symbol: (token.symbol || token.ticker || "").toUpperCase(),
         amount: Number(token.amount ?? 0),
-        coingeckoId: token.coingeckoId || "",
         geckoTokenAddress: token.geckoTokenAddress || ""
       };
-    }
-
-    function getCoinGeckoId(token) {
-      const custom = token.coingeckoId && token.coingeckoId.trim();
-      if (custom) return custom;
-      const mapped = COINGECKO_MAP[token.symbol];
-      return mapped || null;
-    }
-
-    async function fetchCoinGeckoHistoryForToken(token) {
-      const id = getCoinGeckoId(token);
-      if (!id) return null;
-
-      const url =
-        "https://api.coingecko.com/api/v3/coins/" +
-        encodeURIComponent(id) +
-        "/market_chart?vs_currency=usd&days=" +
-        encodeURIComponent(DAYS_BACK) +
-        "&precision=full";
-
-      try {
-        const res = await fetch(url);
-        if (!res.ok) {
-          console.error("CoinGecko market_chart failed for", id, res.status);
-          return null;
-        }
-        const data = await res.json();
-        const prices = data.prices || [];
-        return prices.map(p => ({ time: p[0], price: p[1] }));
-      } catch (err) {
-        console.error("Error fetching CoinGecko history for", id, err);
-        return null;
-      }
-    }
-
-    function formatCurrency(value) {
-      if (isNaN(value)) value = 0;
-      return value.toLocaleString(undefined, {
-        style: "currency",
-        currency: "USD",
-        maximumFractionDigits: 2
-      });
     }
 
     function formatTimestamp(ts) {
@@ -463,133 +372,27 @@
       return `${month}/${day} ${hr12}:${minutes} ${ampm}`;
     }
 
-    function buildShortTime(ts) {
-      const d = new Date(ts);
-      const month = d.getMonth() + 1;
-      const day   = d.getDate();
-      const hours = d.getHours().toString().padStart(2, "0");
-      const mins  = d.getMinutes().toString().padStart(2, "0");
-      return `${month}/${day} ${hours}:${mins}`;
-    }
-
     function buildGeckoTerminalUrl(address) {
       const trimmed = address.trim();
       if (!trimmed) return null;
       const base = "https://www.geckoterminal.com";
-      // basic embed: hide info/swaps, dark mode
+      // embed = 1 (embed mode), info=0 & swaps=0 to hide extra panels, dark theme
       return `${base}/${encodeURIComponent(GECKO_NETWORK)}/tokens/${encodeURIComponent(trimmed)}?embed=1&info=0&swaps=0&theme=dark`;
     }
 
-    function destroyCharts() {
-      if (portfolioChartInstance) {
-        portfolioChartInstance.destroy();
-        portfolioChartInstance = null;
-      }
-      tokenChartInstances.forEach(ch => ch.destroy());
-      tokenChartInstances = [];
-    }
-
-    // ====== MAIN: FETCH + RENDER ======
-    async function updateAndRender() {
+    function renderCharts() {
       const rawTokens = loadTokens().map(normalizeToken).filter(t => t.amount > 0);
-      destroyCharts();
-      tokenChartsContainer.innerHTML = "";
 
+      tokenChartsContainer.innerHTML = "";
       if (!rawTokens.length) {
-        portfolioWrapper.style.display = "none";
-        portfolioEmpty.style.display   = "block";
-        tokensEmpty.style.display      = "block";
-        lastUpdatedText.textContent    = "";
+        tokensEmpty.style.display = "true";
+        lastUpdatedText.textContent = "";
         return;
       }
 
-      portfolioEmpty.style.display   = "none";
-      portfolioWrapper.style.display = "block";
+      let anyWithChart = false;
 
-      // Fetch CoinGecko history for all tokens
-      const historyResults = await Promise.all(
-        rawTokens.map(async (t) => {
-          const history = await fetchCoinGeckoHistoryForToken(t);
-          return { token: t, history };
-        })
-      );
-
-      const tokensWithHistory = historyResults.filter(r => r.history && r.history.length);
-
-      // ----- Portfolio chart (only uses tokens with CoinGecko history) -----
-      if (!tokensWithHistory.length) {
-        portfolioWrapper.style.display = "none";
-        portfolioEmpty.style.display   = "block";
-      } else {
-        const base = tokensWithHistory[0];
-        const baseTimes = base.history.map(p => p.time);
-        const len = baseTimes.length;
-        const portfolioValues = new Array(len).fill(0);
-
-        tokensWithHistory.forEach(entry => {
-          const { token, history } = entry;
-          const amt = token.amount || 0;
-          for (let i = 0; i < len && i < history.length; i++) {
-            portfolioValues[i] += history[i].price * amt;
-          }
-        });
-
-        const portfolioCtx = document.getElementById("portfolioChart").getContext("2d");
-        const portfolioLabels = baseTimes.map(buildShortTime);
-
-        portfolioChartInstance = new Chart(portfolioCtx, {
-          type: "line",
-          data: {
-            labels: portfolioLabels,
-            datasets: [{
-              data: portfolioValues,
-              fill: true,
-              tension: 0.35,
-              borderWidth: 2,
-              borderColor: "rgba(113,197,255,0.96)",
-              backgroundColor: "rgba(113,197,255,0.15)",
-              pointRadius: 0,
-              pointHitRadius: 6
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { display: false },
-              tooltip: {
-                callbacks: {
-                  label: (ctx) => formatCurrency(ctx.parsed.y)
-                }
-              }
-            },
-            scales: {
-              x: {
-                ticks: {
-                  color: "#cbd5ff",
-                  font: { size: 10 }
-                },
-                grid: { display: false }
-              },
-              y: {
-                ticks: {
-                  color: "#a9b0d6",
-                  callback: (value) => formatCurrency(value)
-                },
-                grid: {
-                  color: "rgba(148,163,255,0.25)",
-                  drawBorder: false
-                }
-              }
-            }
-          }
-        });
-      }
-
-      // ----- Per-token charts -----
-      let anyRendered = false;
-
-      rawTokens.forEach((t, idx) => {
+      rawTokens.forEach((t) => {
         const card = document.createElement("div");
         card.className = "token-chart-card";
 
@@ -608,91 +411,23 @@
         header.appendChild(sub);
         card.appendChild(header);
 
-        const result = historyResults[idx];
-        const history = result ? result.history : null;
         const addr = (t.geckoTokenAddress || "").trim();
-
-        let hasSomething = false;
-
-        // 1) CoinGecko line chart if history exists
-        if (history && history.length) {
-          const wrapper = document.createElement("div");
-          wrapper.className = "chart-wrapper";
-          const canvas = document.createElement("canvas");
-          canvas.id = `tokenChart_${idx}`;
-          wrapper.appendChild(canvas);
-          card.appendChild(wrapper);
-
-          const ctx = canvas.getContext("2d");
-          const labels = history.map(p => buildShortTime(p.time));
-          const prices = history.map(p => p.price);
-
-          const chart = new Chart(ctx, {
-            type: "line",
-            data: {
-              labels,
-              datasets: [{
-                data: prices,
-                fill: true,
-                tension: 0.35,
-                borderWidth: 1.8,
-                borderColor: "rgba(113,197,255,0.96)",
-                backgroundColor: "rgba(113,197,255,0.10)",
-                pointRadius: 0,
-                pointHitRadius: 5
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  callbacks: {
-                    label: (ctx) => formatCurrency(ctx.parsed.y)
-                  }
-                }
-              },
-              scales: {
-                x: {
-                  ticks: {
-                    color: "#cbd5ff",
-                    font: { size: 9 }
-                  },
-                  grid: { display: false }
-                },
-                y: {
-                  ticks: {
-                    color: "#a9b0d6",
-                    callback: (value) => formatCurrency(value)
-                  },
-                  grid: {
-                    color: "rgba(148,163,255,0.18)",
-                    drawBorder: false
-                  }
-                }
-              }
-            }
-          });
-
-          tokenChartInstances.push(chart);
-          hasSomething = true;
-        }
-
-        // 2) GeckoTerminal widget if geckoTokenAddress set
         if (addr) {
           const url = buildGeckoTerminalUrl(addr);
           if (url) {
-            const widget = document.createElement("div");
-            widget.className = "widget-wrapper";
+            const wrapper = document.createElement("div");
+            wrapper.className = "chart-wrapper";
+
             const iframe = document.createElement("iframe");
             iframe.className = "chart-frame";
             iframe.src = url;
             iframe.loading = "lazy";
             iframe.setAttribute("allowfullscreen", "allowfullscreen");
-            widget.appendChild(iframe);
-            card.appendChild(widget);
-            hasSomething = true;
+
+            wrapper.appendChild(iframe);
+            card.appendChild(wrapper);
+
+            anyWithChart = true;
           } else {
             const hint = document.createElement("div");
             hint.className = "hint";
@@ -700,34 +435,26 @@
               "Could not build GeckoTerminal URL from this token address.";
             card.appendChild(hint);
           }
-        }
-
-        // 3) If neither history nor widget
-        if (!hasSomething) {
+        } else {
           const hint = document.createElement("div");
           hint.className = "hint";
           hint.textContent =
-            "No CoinGecko history and no GeckoTerminal token address set. Add a CoinGecko ID or a Solana token address in the Tracker.";
+            "No GeckoTerminal token address set. Edit this token in the Tracker and paste the Solana token address to see a chart.";
           card.appendChild(hint);
-        } else {
-          anyRendered = true;
         }
 
         tokenChartsContainer.appendChild(card);
       });
 
-      tokensEmpty.style.display = anyRendered ? "none" : "block";
+      tokensEmpty.style.display = anyWithChart ? "none" : "block";
 
       const now = Date.now();
       lastUpdatedText.textContent =
-        `Portfolio & majors via CoinGecko • widgets via GeckoTerminal • last updated: ${formatTimestamp(now)}`;
+        `Live charts via GeckoTerminal (cropped view) • last opened: ${formatTimestamp(now)}`;
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-      updateAndRender();
-      if (REFRESH_MS && REFRESH_MS > 0) {
-        setInterval(updateAndRender, REFRESH_MS);
-      }
+      renderCharts();
     });
   </script>
 
