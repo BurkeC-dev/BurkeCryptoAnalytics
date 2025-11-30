@@ -326,11 +326,6 @@
       font-weight: 500;
     }
 
-    .token-name { font-weight: 600; }
-    .token-meta {
-      color: var(--text-muted);
-      font-size: 0.72rem;
-    }
     .token-pnl-positive { color: var(--success); }
     .token-pnl-negative { color: var(--danger); }
 
@@ -505,7 +500,8 @@
     const tokensList       = document.getElementById("tokensList");
     const emptyState       = document.getElementById("emptyState");
 
-    const tokens = [];
+    const STORAGE_KEY = "bca_tokens_v1";
+    let tokens = [];
 
     const COINGECKO_MAP = {
       BTC: "bitcoin",
@@ -515,6 +511,23 @@
       DOGE: "dogecoin",
       ADA: "cardano"
     };
+
+    function loadTokens() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        tokens = raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        tokens = [];
+      }
+    }
+
+    function saveTokens() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tokens));
+      } catch (e) {
+        console.error("Failed to save tokens", e);
+      }
+    }
 
     addTokenBtn.addEventListener("click", () => {
       tokenForm.classList.remove("hidden");
@@ -648,6 +661,7 @@
         pnl
       });
 
+      saveTokens();
       renderTokens();
 
       tokenFormElement.reset();
@@ -656,6 +670,10 @@
       tokenForm.classList.add("hidden");
       addTokenBtn.style.display = "inline-block";
     });
+
+    // Load saved tokens on startup
+    loadTokens();
+    renderTokens();
   </script>
 
 </body>
