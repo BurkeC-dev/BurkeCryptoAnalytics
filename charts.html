@@ -16,6 +16,10 @@
       --blue: #71c5ff;
       --text-main: #f6f3ff;
       --text-muted: #a9b0d6;
+      --card-bg: rgba(12,14,35,0.95);
+      --border-soft: rgba(140,155,255,0.3);
+      --loss-red: #ff6b81;
+      --profit-green: #4ade80;
     }
 
     .soft-glow {
@@ -166,9 +170,9 @@
     .card {
       margin-top: 1rem;
       padding: 1.3rem 1.2rem;
-      background: rgba(12,14,35,0.95);
+      background: var(--card-bg);
       border-radius: 24px;
-      border: 1px solid rgba(140,155,255,0.3);
+      border: 1px solid var(--border-soft);
     }
 
     .page-title {
@@ -188,13 +192,189 @@
       font-size: .8rem;
     }
 
-    .coming-soon {
-      margin-top: 1rem;
-      padding: 0.9rem 1rem;
+    .stats-row {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .stat-pill {
+      flex: 1;
+      min-width: 0;
+      padding: 0.7rem 0.75rem;
       border-radius: 18px;
-      border: 1px dashed rgba(140,155,255,0.4);
+      background: radial-gradient(circle at top left, rgba(113,197,255,0.15), rgba(12,14,35,1));
+      border: 1px solid rgba(140,155,255,0.45);
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-bottom: 0.3rem;
+    }
+
+    .stat-value {
+      font-size: 1.0rem;
+      font-weight: 500;
+      display: flex;
+      align-items: baseline;
+      gap: 0.25rem;
+    }
+
+    .stat-sub {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .pill-profit {
+      color: var(--profit-green);
+    }
+
+    .pill-loss {
+      color: var(--loss-red);
+    }
+
+    .chart-section-title {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      margin: 1.2rem 0 0.4rem;
+    }
+
+    .chart-card {
+      margin-top: 0.35rem;
+      padding: 0.85rem 0.85rem 0.8rem;
+      background: rgba(6,8,26,0.95);
+      border-radius: 18px;
+      border: 1px solid rgba(104,122,255,0.4);
+    }
+
+    .chart-bar-track {
+      position: relative;
+      width: 100%;
+      height: 14px;
+      border-radius: 999px;
+      background: rgba(20,24,60,1);
+      overflow: hidden;
+      margin: 0.4rem 0 0.2rem;
+      box-shadow: inset 0 0 0 1px rgba(113,197,255,0.08);
+    }
+
+    .chart-bar-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #bfa8ff, #71c5ff);
+      box-shadow:
+        0 0 4px rgba(113,197,255,0.8),
+        0 0 10px rgba(113,197,255,0.6);
+      transform-origin: left center;
+      transform: scaleX(0);
+    }
+
+    .allocation-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem 0.6rem;
+      margin-top: 0.35rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      max-width: 100%;
+    }
+
+    .legend-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #bfa8ff, #71c5ff);
+      flex-shrink: 0;
+    }
+
+    .token-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-top: 0.4rem;
+    }
+
+    .token-main {
+      display: flex;
+      flex-direction: column;
+      gap: 0.05rem;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .token-name {
+      font-size: 0.8rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .token-sub {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .token-pnl {
+      font-size: 0.8rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .token-pnl.profit {
+      color: var(--profit-green);
+    }
+
+    .token-pnl.loss {
+      color: var(--loss-red);
+    }
+
+    .pnl-bar-track {
+      position: relative;
+      flex: 1.1;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(20,24,60,1);
+      overflow: hidden;
+      margin-left: 0.3rem;
+      box-shadow: inset 0 0 0 1px rgba(113,197,255,0.07);
+    }
+
+    .pnl-bar-fill {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      border-radius: 999px;
+      transform-origin: center left;
+      transform: scaleX(0);
+      background: linear-gradient(90deg, #ff6b81, #4ade80);
+    }
+
+    .empty-state {
+      margin-top: 0.6rem;
+      padding: 0.75rem 0.8rem;
+      border-radius: 16px;
+      border: 1px dashed rgba(140,155,255,0.45);
       font-size: 0.8rem;
       color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .empty-state strong {
+      color: var(--lavender);
     }
   </style>
 </head>
@@ -227,17 +407,55 @@
     <main class="card">
       <h2 class="page-title underline-soft">Charts</h2>
       <p class="view-description">
-        Visual snapshots of your positions and price action — coming soon.
+        Visual snapshots of your portfolio and token performance, powered by your saved tracker data.
       </p>
 
-      <div class="coming-soon">
-        This page is ready for your future charts — simple line charts, embedded TradingView,
-        or DexScreener panels. When you're ready, we’ll drop them inside this card.
+      <!-- TOP STATS -->
+      <div class="stats-row">
+        <div class="stat-pill">
+          <div class="stat-label">Total Portfolio</div>
+          <div class="stat-value" id="totalPortfolioValue">
+            $0.00
+            <span class="stat-sub" id="totalTokensLabel">0 tokens</span>
+          </div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-label">Overall Profit / Loss</div>
+          <div class="stat-value" id="totalPnlValue">
+            $0.00
+            <span class="stat-sub" id="totalPnlPercent">(0.00%)</span>
+          </div>
+        </div>
       </div>
+
+      <!-- PORTFOLIO ALLOCATION -->
+      <div class="chart-section-title">Portfolio Allocation</div>
+      <div class="chart-card" id="allocationSection">
+        <div class="chart-bar-track">
+          <div class="chart-bar-fill" id="allocationBar"></div>
+        </div>
+        <div class="allocation-legend" id="allocationLegend"></div>
+        <div class="empty-state" id="allocationEmpty" style="display:none;">
+          <strong>No tokens yet.</strong> Add positions in the <em>Tracker</em> tab and we’ll show how your portfolio
+          is split across coins here.
+        </div>
+      </div>
+
+      <!-- PNL BY TOKEN -->
+      <div class="chart-section-title">Profit / Loss by Token</div>
+      <div class="chart-card" id="pnlSection">
+        <div id="pnlList"></div>
+        <div class="empty-state" id="pnlEmpty" style="display:none;">
+          Once you have tokens with a cost basis and a last price, this section will show which coins are
+          carrying the gains — and which ones are haunting your bags.
+        </div>
+      </div>
+
     </main>
   </div>
 
   <script>
+    // ====== MENU ======
     const hamburger   = document.getElementById("hamburger");
     const menuOverlay = document.getElementById("menuOverlay");
     const menuClose   = document.getElementById("menuClose");
@@ -248,6 +466,244 @@
     menuClose.addEventListener("click", () => {
       menuOverlay.classList.remove("active");
     });
+    menuOverlay.addEventListener("click", (e) => {
+      if (e.target === menuOverlay) {
+        menuOverlay.classList.remove("active");
+      }
+    });
+
+    // ====== CHART LOGIC ======
+    // IMPORTANT:
+    // Update STORAGE_KEY if your tracker uses a different localStorage key.
+    const STORAGE_KEY = "bcaTokens";
+
+    function loadTokens() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        console.error("Error reading tokens from localStorage", e);
+        return [];
+      }
+    }
+
+    // Tries to be flexible about field names used in tracking.html
+    function normalizeToken(token) {
+      const name = token.name || token.tokenName || token.symbol || "Unknown";
+      const symbol = token.symbol || token.ticker || "";
+
+      const quantity =
+        Number(token.amount ?? token.qty ?? token.quantity ?? 0);
+
+      const lastPrice =
+        Number(token.lastPrice ?? token.price ?? token.currentPrice ?? 0);
+
+      const avgPrice =
+        Number(token.avgPrice ?? token.averagePrice ?? token.entryPrice ?? 0);
+
+      const explicitCurrentValue =
+        Number(token.currentValue ?? token.value ?? 0);
+
+      const explicitTotalCost =
+        Number(token.totalCost ?? token.costBasisTotal ?? token.cost ?? 0);
+
+      const currentValue = explicitCurrentValue || (quantity * lastPrice);
+      const totalCost = explicitTotalCost || (quantity * avgPrice);
+
+      let pnl = 0;
+      if (token.pnl !== undefined) {
+        pnl = Number(token.pnl);
+      } else if (currentValue && totalCost) {
+        pnl = currentValue - totalCost;
+      }
+
+      let pnlPercent = 0;
+      if (token.pnlPercent !== undefined) {
+        pnlPercent = Number(token.pnlPercent);
+      } else if (totalCost) {
+        pnlPercent = (pnl / totalCost) * 100;
+      }
+
+      return {
+        name,
+        symbol,
+        quantity,
+        lastPrice,
+        currentValue,
+        totalCost,
+        pnl,
+        pnlPercent
+      };
+    }
+
+    function formatCurrency(value) {
+      if (isNaN(value)) value = 0;
+      return value.toLocaleString(undefined, {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 2
+      });
+    }
+
+    function formatPercent(value) {
+      if (isNaN(value)) value = 0;
+      return (value).toFixed(2) + "%";
+    }
+
+    function renderCharts() {
+      const rawTokens = loadTokens();
+      const tokens = rawTokens.map(normalizeToken).filter(t => t.quantity || t.currentValue);
+
+      const totalPortfolioEl = document.getElementById("totalPortfolioValue");
+      const totalTokensLabelEl = document.getElementById("totalTokensLabel");
+      const totalPnlValueEl = document.getElementById("totalPnlValue");
+      const totalPnlPercentEl = document.getElementById("totalPnlPercent");
+
+      const allocationBarEl = document.getElementById("allocationBar");
+      const allocationLegendEl = document.getElementById("allocationLegend");
+      const allocationEmptyEl = document.getElementById("allocationEmpty");
+
+      const pnlListEl = document.getElementById("pnlList");
+      const pnlEmptyEl = document.getElementById("pnlEmpty");
+
+      if (!tokens.length) {
+        // Reset stats visually
+        totalPortfolioEl.firstChild.nodeValue = "$0.00";
+        totalTokensLabelEl.textContent = "0 tokens";
+
+        totalPnlValueEl.firstChild.nodeValue = "$0.00";
+        totalPnlPercentEl.textContent = "(0.00%)";
+        totalPnlValueEl.classList.remove("pill-profit", "pill-loss");
+
+        allocationBarEl.style.transform = "scaleX(0)";
+        allocationLegendEl.innerHTML = "";
+        allocationEmptyEl.style.display = "block";
+
+        pnlListEl.innerHTML = "";
+        pnlEmptyEl.style.display = "block";
+        return;
+      }
+
+      // === Totals ===
+      let totalValue = 0;
+      let totalCost = 0;
+      tokens.forEach(t => {
+        totalValue += (t.currentValue || 0);
+        totalCost += (t.totalCost || 0);
+      });
+      const totalPnl = totalValue - totalCost;
+      const totalPnlPercent = totalCost ? (totalPnl / totalCost) * 100 : 0;
+
+      // Update summary
+      totalPortfolioEl.firstChild.nodeValue = formatCurrency(totalValue);
+      totalTokensLabelEl.textContent = `${tokens.length} token${tokens.length > 1 ? "s" : ""}`;
+
+      totalPnlValueEl.firstChild.nodeValue = formatCurrency(totalPnl);
+      totalPnlPercentEl.textContent = `(${formatPercent(totalPnlPercent)})`;
+
+      totalPnlValueEl.classList.remove("pill-profit", "pill-loss");
+      if (totalPnl > 0) {
+        totalPnlValueEl.classList.add("pill-profit");
+      } else if (totalPnl < 0) {
+        totalPnlValueEl.classList.add("pill-loss");
+      }
+
+      // === Allocation chart ===
+      allocationLegendEl.innerHTML = "";
+      allocationEmptyEl.style.display = "none";
+
+      // We represent allocation by legend + full bar "lit" (since distribution is in legend, not stacked in the bar)
+      // If you want a stacked bar later, we can change this.
+      allocationBarEl.style.transform = "scaleX(1)";
+
+      tokens
+        .sort((a, b) => (b.currentValue || 0) - (a.currentValue || 0))
+        .forEach((t, idx) => {
+          if (!totalValue) return;
+          const share = (t.currentValue || 0) / totalValue * 100;
+
+          const item = document.createElement("div");
+          item.className = "legend-item";
+
+          const swatch = document.createElement("div");
+          swatch.className = "legend-swatch";
+          // Slight hue shift based on index for subtle variation
+          swatch.style.filter = `hue-rotate(${idx * 25}deg)`;
+
+          const label = document.createElement("div");
+          label.textContent = `${t.symbol || t.name} – ${share.toFixed(1)}%`;
+
+          item.appendChild(swatch);
+          item.appendChild(label);
+          allocationLegendEl.appendChild(item);
+        });
+
+      // === PnL by token ===
+      pnlListEl.innerHTML = "";
+      pnlEmptyEl.style.display = "none";
+
+      const maxAbsPnl = tokens.reduce((max, t) => {
+        const val = Math.abs(t.pnl || 0);
+        return val > max ? val : max;
+      }, 0) || 1;
+
+      tokens
+        .slice() // copy
+        .sort((a, b) => (b.pnl || 0) - (a.pnl || 0))
+        .forEach((t, idx) => {
+          const row = document.createElement("div");
+          row.className = "token-row";
+
+          const main = document.createElement("div");
+          main.className = "token-main";
+
+          const nameEl = document.createElement("div");
+          nameEl.className = "token-name";
+          nameEl.textContent = t.symbol ? `${t.symbol}` : t.name;
+
+          const subEl = document.createElement("div");
+          subEl.className = "token-sub";
+          const v = formatCurrency(t.currentValue || 0);
+          const q = t.quantity || 0;
+          subEl.textContent = `${v} • ${q} ${t.symbol || ""}`.trim();
+
+          main.appendChild(nameEl);
+          main.appendChild(subEl);
+
+          const pnlText = document.createElement("div");
+          pnlText.className = "token-pnl";
+          const isProfit = (t.pnl || 0) > 0;
+          const isLoss = (t.pnl || 0) < 0;
+          if (isProfit) pnlText.classList.add("profit");
+          if (isLoss) pnlText.classList.add("loss");
+
+          const sign = (t.pnl || 0) > 0 ? "+" : "";
+          pnlText.textContent =
+            `${sign}${formatCurrency(t.pnl || 0)} (${sign}${formatPercent(t.pnlPercent || 0)})`;
+
+          const barTrack = document.createElement("div");
+          barTrack.className = "pnl-bar-track";
+
+          const barFill = document.createElement("div");
+          barFill.className = "pnl-bar-fill";
+          const ratio = Math.min(Math.abs(t.pnl || 0) / maxAbsPnl, 1);
+          barFill.style.transform = `scaleX(${ratio})`;
+          // Shift gradient so red if negative, green if positive
+          barFill.style.backgroundPosition = (t.pnl || 0) >= 0 ? "100% 0" : "0 0";
+
+          barTrack.appendChild(barFill);
+
+          row.appendChild(main);
+          row.appendChild(barTrack);
+          row.appendChild(pnlText);
+
+          pnlListEl.appendChild(row);
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", renderCharts);
   </script>
 
 </body>
