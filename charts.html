@@ -389,13 +389,23 @@
       }
     }
 
+    function safeNumber(n) {
+      if (typeof n === "number" && isFinite(n)) return n;
+      const parsed = parseFloat(n);
+      return isFinite(parsed) ? parsed : 0;
+    }
+
     function normalizeToken(token) {
+      const amount = Number(token.amount ?? 0);
+      const pnl    = safeNumber(token.pnl ?? 0);
+
       return {
         name: token.name || token.tokenName || token.symbol || "Unknown",
         symbol: (token.symbol || token.ticker || "").toUpperCase(),
-        amount: Number(token.amount ?? 0),
+        amount,
         coingeckoId: token.coingeckoId || "",
-        geckoTokenAddress: token.geckoTokenAddress || ""
+        geckoTokenAddress: token.geckoTokenAddress || "",
+        pnl
       };
     }
 
@@ -485,7 +495,7 @@
 
       tokensEmpty.style.display = "none";
 
-      // sort: tokens with CoinGecko ID (chart-capable) first, others (incl. memecoin link-only) last
+      // sort groups: chart-capable first, link-only last
       const tokensWithId    = [];
       const tokensWithoutId = [];
 
@@ -496,6 +506,10 @@
           tokensWithoutId.push(t);
         }
       }
+
+      // NEW: sort each group by P/L descending (highest profit first)
+      tokensWithId.sort((a, b) => b.pnl - a.pnl);
+      tokensWithoutId.sort((a, b) => b.pnl - a.pnl);
 
       const orderedTokens = tokensWithId.concat(tokensWithoutId);
 
@@ -668,7 +682,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-      buildUI();       // build cards + canvases + links once (charts-first, link-last)
+      buildUI();       // build cards + canvases + links once (charts-first, link-last, sorted by P/L)
       refreshCharts(); // first data pull
 
       if (REFRESH_MS && REFRESH_MS > 0) {
