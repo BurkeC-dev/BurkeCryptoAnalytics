@@ -100,6 +100,7 @@
       margin-right: 18px;
     }
 
+    /* MENU OVERLAY */
     .menu-overlay {
       position: fixed;
       top: 0;
@@ -215,13 +216,27 @@
       cursor: pointer;
     }
 
-    .token-form {
-      margin-top: 1rem;
-      padding: 1rem;
-      background: rgba(16,18,45,0.95);
-      border-radius: 18px;
+    /* ADD TOKEN OVERLAY */
+    #tokenFormOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(5,7,22,0.78);
+      backdrop-filter: blur(16px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 900;
+    }
+    .token-form-panel {
+      width: 90%;
+      max-width: 420px;
+      background: rgba(16,18,45,0.96);
+      border-radius: 20px;
       border: 1px solid rgba(140,155,255,0.45);
-      position: relative;
+      box-shadow:
+        inset 0 0 12px rgba(0,0,0,0.35),
+        0 10px 30px rgba(0,0,0,0.55);
+      padding: 1rem 1.1rem 1.2rem;
     }
 
     .token-form-header {
@@ -286,6 +301,7 @@
       border-radius: 16px;
       border: 1px solid rgba(140,155,255,0.3);
     }
+
     table {
       width: 100%;
       font-size: .75rem;
@@ -301,14 +317,16 @@
       table td { display: block; }
     }
 
-    /* Card-like token rows */
+    /* TOKEN CARDS */
     .token-row {
-      background: radial-gradient(circle at top left, rgba(113,197,255,0.16), rgba(10,12,35,0.95));
+      background: rgba(8,10,28,0.9);
       border-radius: 16px;
-      padding: 0.7rem 0.9rem;
-      margin: 0.5rem 0.3rem;
-      box-shadow: 0 14px 30px rgba(0,0,0,0.55);
-      border: 1px solid rgba(140,155,255,0.45);
+      padding: 0.75rem 0.95rem;
+      margin: 0.6rem 0.3rem;
+      border: 1px solid rgba(140,155,255,0.3);
+      box-shadow:
+        0 0 10px rgba(140,155,255,0.35),
+        0 10px 24px rgba(0,0,0,0.6);
     }
 
     .token-name { font-weight: 600; }
@@ -316,8 +334,14 @@
       color: var(--text-muted);
       font-size: 0.72rem;
     }
-    .token-pnl-positive { color: var(--success); }
-    .token-pnl-negative { color: var(--danger); }
+    .token-pnl-positive {
+      color: var(--success);
+      font-weight: 600;
+    }
+    .token-pnl-negative {
+      color: var(--danger);
+      font-weight: 600;
+    }
   </style>
 </head>
 
@@ -332,6 +356,60 @@
     <div class="menu-items">
       <div class="menu-item" data-view="overview">Overview</div>
       <div class="menu-item" data-view="tracking">Tracker</div>
+    </div>
+  </div>
+
+  <!-- ADD TOKEN OVERLAY -->
+  <div id="tokenFormOverlay" class="hidden">
+    <div class="token-form-panel">
+      <div class="token-form-header">
+        <div>
+          <div class="token-form-title">New token entry</div>
+          <div class="token-form-subtext">
+            Choose a coin, log your entry, we’ll track the rest.
+          </div>
+        </div>
+        <button class="token-form-close" id="tokenFormClose">×</button>
+      </div>
+
+      <form id="tokenFormElement">
+        <div class="form-row">
+          <label class="form-label" for="quickCoinSelect">Quick coin select</label>
+          <select id="quickCoinSelect" class="token-select">
+            <option value="">Choose a popular coin…</option>
+            <option value="bitcoin|BTC|Bitcoin">Bitcoin (BTC)</option>
+            <option value="ethereum|ETH|Ethereum">Ethereum (ETH)</option>
+            <option value="solana|SOL|Solana">Solana (SOL)</option>
+            <option value="ripple|XRP|XRP">XRP (XRP)</option>
+            <option value="dogecoin|DOGE|Dogecoin">Dogecoin (DOGE)</option>
+            <option value="cardano|ADA|Cardano">Cardano (ADA)</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label" for="coinName">Name of coin</label>
+          <input id="coinName" class="token-input" type="text" placeholder="e.g. Bitcoin" required />
+        </div>
+
+        <div class="form-row">
+          <label class="form-label" for="coinSymbol">Symbol / ticker</label>
+          <input id="coinSymbol" class="token-input" type="text" placeholder="e.g. BTC" required />
+        </div>
+
+        <div class="form-row">
+          <label class="form-label" id="amountLabel" for="coinAmount">Amount of coin bought</label>
+          <input id="coinAmount" class="token-input" type="number" min="0" step="0.00000001" placeholder="e.g. 0.00457278" required />
+        </div>
+
+        <div class="form-row">
+          <label class="form-label" for="totalSpent">Total spent (USD)</label>
+          <input id="totalSpent" class="token-input" type="number" min="0" step="0.01" placeholder="e.g. 411" required />
+        </div>
+
+        <div class="form-row" style="margin-top:0.8rem;">
+          <button type="submit" class="primary-pill">Save token</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -367,59 +445,6 @@
         <button id="addTokenBtn" class="primary-pill">Add token</button>
         <button id="refreshPricesBtn" class="ghost-pill">Refresh prices</button>
 
-        <!-- TOKEN FORM PANEL -->
-        <div id="tokenForm" class="token-form hidden">
-          <div class="token-form-header">
-            <div>
-              <div class="token-form-title">New token entry</div>
-              <div class="token-form-subtext">
-                Choose a coin, log your entry, we’ll track the rest.
-              </div>
-            </div>
-            <button class="token-form-close" id="tokenFormClose">×</button>
-          </div>
-
-          <form id="tokenFormElement">
-            <div class="form-row">
-              <label class="form-label" for="quickCoinSelect">Quick coin select</label>
-              <select id="quickCoinSelect" class="token-select">
-                <option value="">Choose a popular coin…</option>
-                <option value="bitcoin|BTC|Bitcoin">Bitcoin (BTC)</option>
-                <option value="ethereum|ETH|Ethereum">Ethereum (ETH)</option>
-                <option value="solana|SOL|Solana">Solana (SOL)</option>
-                <option value="ripple|XRP|XRP">XRP (XRP)</option>
-                <option value="dogecoin|DOGE|Dogecoin">Dogecoin (DOGE)</option>
-                <option value="cardano|ADA|Cardano">Cardano (ADA)</option>
-              </select>
-            </div>
-
-            <div class="form-row">
-              <label class="form-label" for="coinName">Name of coin</label>
-              <input id="coinName" class="token-input" type="text" placeholder="e.g. Bitcoin" required />
-            </div>
-
-            <div class="form-row">
-              <label class="form-label" for="coinSymbol">Symbol / ticker</label>
-              <input id="coinSymbol" class="token-input" type="text" placeholder="e.g. BTC" required />
-            </div>
-
-            <div class="form-row">
-              <label class="form-label" id="amountLabel" for="coinAmount">Amount of coin bought</label>
-              <input id="coinAmount" class="token-input" type="number" min="0" step="0.00000001" placeholder="e.g. 0.00457278" required />
-            </div>
-
-            <div class="form-row">
-              <label class="form-label" for="totalSpent">Total spent (USD)</label>
-              <input id="totalSpent" class="token-input" type="number" min="0" step="0.01" placeholder="e.g. 411" required />
-            </div>
-
-            <div class="form-row" style="margin-top:0.8rem;">
-              <button type="submit" class="primary-pill">Save token</button>
-            </div>
-          </form>
-        </div>
-
-        <!-- TOKENS TABLE -->
         <div class="table-wrapper">
           <table>
             <tbody id="tokenTableBody"></tbody>
@@ -462,20 +487,20 @@
     showView("overview");
 
     /* TOKEN FORM + TRACKER LOGIC */
-    const addTokenBtn      = document.getElementById("addTokenBtn");
-    const tokenForm        = document.getElementById("tokenForm");
-    const tokenFormClose   = document.getElementById("tokenFormClose");
-    const tokenFormElement = document.getElementById("tokenFormElement");
+    const addTokenBtn       = document.getElementById("addTokenBtn");
+    const tokenFormOverlay  = document.getElementById("tokenFormOverlay");
+    const tokenFormClose    = document.getElementById("tokenFormClose");
+    const tokenFormElement  = document.getElementById("tokenFormElement");
 
-    const quickCoinSelect  = document.getElementById("quickCoinSelect");
-    const coinNameInput    = document.getElementById("coinName");
-    const coinSymbolInput  = document.getElementById("coinSymbol");
-    const amountLabel      = document.getElementById("amountLabel");
-    const coinAmountInput  = document.getElementById("coinAmount");
-    const totalSpentInput  = document.getElementById("totalSpent");
+    const quickCoinSelect   = document.getElementById("quickCoinSelect");
+    const coinNameInput     = document.getElementById("coinName");
+    const coinSymbolInput   = document.getElementById("coinSymbol");
+    const amountLabel       = document.getElementById("amountLabel");
+    const coinAmountInput   = document.getElementById("coinAmount");
+    const totalSpentInput   = document.getElementById("totalSpent");
 
-    const tokenTableBody   = document.getElementById("tokenTableBody");
-    const emptyState       = document.getElementById("emptyState");
+    const tokenTableBody    = document.getElementById("tokenTableBody");
+    const emptyState        = document.getElementById("emptyState");
 
     const tokens = [];
 
@@ -488,14 +513,19 @@
       ADA: "cardano"
     };
 
+    function openTokenForm() {
+      tokenFormOverlay.classList.remove("hidden");
+    }
+    function closeTokenForm() {
+      tokenFormOverlay.classList.add("hidden");
+    }
+
     addTokenBtn.addEventListener("click", () => {
-      tokenForm.classList.remove("hidden");
-      addTokenBtn.style.display = "none";
+      openTokenForm();
     });
 
     tokenFormClose.addEventListener("click", () => {
-      tokenForm.classList.add("hidden");
-      addTokenBtn.style.display = "inline-block";
+      closeTokenForm();
     });
 
     function updateAmountLabel() {
@@ -575,13 +605,13 @@
         valueTd.innerHTML = `
           <div class="token-meta">Value</div>
           <div class="${pnlClass}">$${t.value.toFixed(2)}</div>
+          <div class="token-meta ${pnlClass}">${sign}${pct.toFixed(2)}%</div>
         `;
 
         const pnlTd = document.createElement("td");
         pnlTd.innerHTML = `
           <div class="token-meta">${pnlLabel}</div>
           <div class="${pnlClass}">$${t.pnl.toFixed(2)}</div>
-          <div class="token-meta ${pnlClass}">${sign}${pct.toFixed(2)}%</div>
         `;
 
         tr.appendChild(nameTd);
@@ -632,8 +662,7 @@
       tokenFormElement.reset();
       quickCoinSelect.value = "";
       amountLabel.textContent = "Amount of coin bought";
-      tokenForm.classList.add("hidden");
-      addTokenBtn.style.display = "inline-block";
+      closeTokenForm();
     });
   </script>
 
