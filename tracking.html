@@ -494,7 +494,9 @@
     </main>
   </div>
 
-  <!-- (your existing token form + add-more overlays go here; unchanged in logic) -->
+  <!-- Your existing overlays (same IDs) should still be here in your project:
+       tokenFormOverlay, tokenFormElement, addMoreOverlay, etc.
+       I'm not rewriting those, just wiring the JS below to them. -->
 
   <script>
     /* MENU BEHAVIOR */
@@ -527,8 +529,9 @@
     const tokenFormSubtitle  = document.getElementById("tokenFormSubtitle");
 
     const addMoreOverlay       = document.getElementById("addMoreOverlay");
-    const addMoreFormEl        = document.getElementById("addMoreFormElement");
+    const addMoreForm          = document.getElementById("addMoreForm");
     const addMoreClose         = document.getElementById("addMoreClose");
+    const addMoreFormElement   = document.getElementById("addMoreFormElement");
     const addMoreAmountInput   = document.getElementById("addMoreAmount");
     const addMoreUsdInput      = document.getElementById("addMoreUsd");
     const addMoreTitle         = document.getElementById("addMoreTitle");
@@ -561,8 +564,106 @@
       ADA: "cardano"
     };
 
-    // ... all your existing logic for loadTokens, saveTokens, forms, price fetching, etc. ...
+    let formMode     = "new";   // "new" | "edit"
+    let editingIndex = null;
+    let addMoreIndex = null;
 
+    function loadTokens() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        tokens = raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        tokens = [];
+      }
+    }
+
+    function saveTokens() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tokens));
+      } catch (e) {
+        console.error("Failed to save tokens", e);
+      }
+    }
+
+    // Helpers for overlays
+    function openTokenForm() {
+      tokenFormOverlay.classList.remove("hidden");
+      addTokenBtn.style.display = "none";
+    }
+    function closeTokenForm() {
+      tokenFormOverlay.classList.add("hidden");
+      addTokenBtn.style.display = "inline-block";
+      tokenFormElement.reset();
+      quickCoinSelect.value = "";
+      cgIdInput.value = "";
+      geckoAddressInput.value = "";
+    }
+
+    function openAddMoreForm() {
+      addMoreOverlay.classList.remove("hidden");
+      addTokenBtn.style.display = "none";
+    }
+    function closeAddMoreForm() {
+      addMoreOverlay.classList.add("hidden");
+      addMoreFormElement.reset();
+      addMoreIndex = null;
+      addTokenBtn.style.display = "inline-block";
+    }
+
+    addTokenBtn.addEventListener("click", () => {
+      formMode = "new";
+      editingIndex = null;
+      tokenFormTitle.textContent = "New token entry";
+      tokenFormSubtitle.textContent = "Add a fresh position to track.";
+      amountLabel.textContent = "Amount owned";
+      openTokenForm();
+    });
+
+    tokenFormClose.addEventListener("click", closeTokenForm);
+    addMoreClose.addEventListener("click", closeAddMoreForm);
+
+    // Quick coin shortcuts (BTC / SOL etc.)
+    quickCoinSelect.addEventListener("change", () => {
+      const val = quickCoinSelect.value;
+      if (!val) {
+        coinNameInput.value = "";
+        coinSymbolInput.value = "";
+        cgIdInput.value = "";
+        advancedRow.classList.add("hidden");
+        return;
+      }
+      const label = quickCoinSelect.options[quickCoinSelect.selectedIndex].text;
+      coinNameInput.value   = label;
+      coinSymbolInput.value = val;
+
+      const mapped = COINGECKO_MAP[val];
+      if (mapped) {
+        cgIdInput.value = mapped;
+        advancedRow.classList.add("hidden");
+      } else {
+        cgIdInput.value = "";
+        advancedRow.classList.remove("hidden");
+      }
+    });
+
+    // Toggle advanced row if user types custom symbol/id manually
+    coinSymbolInput.addEventListener("input", () => {
+      const sym = coinSymbolInput.value.trim().toUpperCase();
+      if (!sym) {
+        cgIdInput.value = "";
+        advancedRow.classList.remove("hidden");
+        return;
+      }
+      const mapped = COINGECKO_MAP[sym];
+      if (mapped) {
+        cgIdInput.value = mapped;
+        advancedRow.classList.add("hidden");
+      } else {
+        advancedRow.classList.remove("hidden");
+      }
+    });
+
+    // Render tokens (sorted + Rowan roasts)
     function renderTokens() {
       tokensList.innerHTML = "";
 
@@ -573,36 +674,35 @@
 
       emptyState.style.display = "none";
 
-      // Sort tokens by profit/loss (highest first) without changing the stored order
+      // Sort by profit/loss (highest first) without mutating storage order
       const indices = tokens.map((_, i) => i).sort((a, b) => {
         const pnlA = typeof tokens[a].pnl === "number" ? tokens[a].pnl : 0;
         const pnlB = typeof tokens[b].pnl === "number" ? tokens[b].pnl : 0;
         return pnlB - pnlA;
       });
 
-      // Rowan roast packs
       const rowanUp = [
         "finally, one of your bags is doing something.",
-        "don’t let this go to your head.",
+        "don\u2019t let this go to your head.",
         "even a blind trader catches a green candle sometimes.",
         "okay profit prince/princess, calm down.",
         "screenshot it before it disappears."
       ];
 
       const rowanDown = [
-        "you bought what… at which price?",
-        "this token said ‘down only’ and you said ‘sure.’",
-        "hey, you’re funding the winners’ profits. generous.",
+        "you bought what\u2026 at which price?",
+        "this token said \u2018down only\u2019 and you said \u2018sure.\u2019",
+        "hey, you\u2019re funding the winners\u2019 profits. generous.",
         "did you buy the top? be honest.",
-        "I’ve seen rugs with better recovery attempts."
+        "I\u2019ve seen rugs with better recovery attempts."
       ];
 
       const rowanFlat = [
-        "this chart is giving ‘nobody cares.’",
+        "this chart is giving \u2018nobody cares.\u2019",
         "your coin is taking a personal day.",
-        "flat. like… pancake flat.",
+        "flat. like\u2026 pancake flat.",
         "this thing moves less than your motivation.",
-        "market: ‘I’m not mad, I’m just indifferent.’"
+        "market: \u2018I\u2019m not mad, I\u2019m just indifferent.\u2019"
       ];
 
       function pick(list) {
@@ -615,12 +715,13 @@
 
       indices.forEach((index) => {
         const t = tokens[index];
-        const isProfit = (typeof t.pnl === "number" ? t.pnl : 0) >= 0;
+        const cost  = typeof t.cost === "number" ? t.cost : 0;
+        const pnl   = typeof t.pnl === "number" ? t.pnl : 0;
+        const value = typeof t.value === "number" ? t.value : 0;
+
+        const isProfit = pnl >= 0;
         const pnlClass = isProfit ? "token-pnl-positive" : "token-pnl-negative";
         const sign = isProfit ? "+" : "";
-        const cost = typeof t.cost === "number" ? t.cost : 0;
-        const pnl = typeof t.pnl === "number" ? t.pnl : 0;
-        const value = typeof t.value === "number" ? t.value : 0;
         const pct = cost !== 0 ? (pnl / cost) * 100 : 0;
 
         let roastText;
@@ -674,10 +775,12 @@
       });
     }
 
-    // at the very bottom of your script:
+    // (Your existing handlers for clicking token cards, editing, adding more, deleting,
+    //  plus the refreshPrices logic, should still sit below here in your real file.)
+
+    // Load saved tokens on startup
     loadTokens();
     renderTokens();
   </script>
-
 </body>
 </html>
