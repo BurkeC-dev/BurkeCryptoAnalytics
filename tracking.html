@@ -527,7 +527,7 @@
 
             <div class="form-row">
               <label class="form-label" id="amountLabel" for="coinAmount">Amount of coin bought</label>
-              <input id="coinAmount" class="token-input" type="number" min="0" step="0.00000001" placeholder="e.g. 0.00457278" required />
+              <input id="coinAmount" class="token-input" type="number" min="0" step="any" placeholder="e.g. 0.00457278" required />
             </div>
 
             <div class="form-row">
@@ -558,7 +558,7 @@
           <form id="addMoreFormElement">
             <div class="form-row">
               <label class="form-label" id="addMoreAmountLabel" for="addMoreAmount">Additional amount bought</label>
-              <input id="addMoreAmount" class="token-input" type="number" min="0" step="0.00000001" placeholder="e.g. 0.001" required />
+              <input id="addMoreAmount" class="token-input" type="number" min="0" step="any" placeholder="e.g. 0.001" required />
             </div>
 
             <div class="form-row">
@@ -825,7 +825,6 @@
 
       tokens.forEach((t, index) => {
         const isProfit = t.pnl >= 0;
-        const pnlLabel = isProfit ? "Profit" : "Loss";
         const pnlClass = isProfit ? "token-pnl-positive" : "token-pnl-negative";
         const sign = isProfit ? "+" : "";
         const pct = t.cost !== 0 ? (t.pnl / t.cost) * 100 : 0;
@@ -861,7 +860,7 @@
           </div>
 
           <div class="token-row-line">
-            <div class="token-row-label">${pnlLabel}</div>
+            <div class="token-row-label">${isProfit ? "Profit" : "Loss"}</div>
             <div class="token-row-value ${pnlClass}">$${t.pnl.toFixed(2)}</div>
           </div>
         `;
