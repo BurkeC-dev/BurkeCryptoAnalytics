@@ -295,6 +295,7 @@
     td {
       padding: .35rem 0;
       border-top: 1px solid rgba(60,70,120,0.5);
+      vertical-align: top;
     }
     @media (max-width: 600px) {
       table thead { display: none; }
@@ -461,7 +462,12 @@
       document.getElementById(viewName + "View").classList.add("active");
     }
 
-    showView("overview");
+    // start on Tracking view because that's what you use most
+    showView("tracking");
+
+    /* OVERVIEW ELEMENTS */
+    const totSummary = document.getElementById("totSummary");
+    const totCards   = document.getElementById("totCards");
 
     /* TOKEN FORM + TRACKER LOGIC */
     const addTokenBtn      = document.getElementById("addTokenBtn");
@@ -478,8 +484,29 @@
 
     const tokenTableBody   = document.getElementById("tokenTableBody");
     const emptyState       = document.getElementById("emptyState");
+    const refreshPricesBtn = document.getElementById("refreshPricesBtn");
 
-    const tokens = [];
+    const STORAGE_KEY = "burke_crypto_tokens_v1";
+
+    function loadTokens() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        console.error("Failed to load tokens", e);
+        return [];
+      }
+    }
+
+    function saveTokens(tokens) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tokens));
+      } catch (e) {
+        console.error("Failed to save tokens", e);
+      }
+    }
+
+    let tokens = loadTokens();
 
     const COINGECKO_MAP = {
       BTC: "bitcoin",
@@ -520,25 +547,15 @@
 
     coinSymbolInput.addEventListener("input", updateAmountLabel);
 
-    async function fetchCurrentPrice(symbol) {
-      const upper = symbol.toUpperCase();
-      const id = COINGECKO_MAP[upper];
-      if (!id) return null;
-
-      try {
-        const res = await fetch(
-          "https://api.coingecko.com/api/v3/simple/price?ids=" +
-          encodeURIComponent(id) +
-          "&vs_currencies=usd"
-        );
-        if (!res.ok) return null;
-        const data = await res.json();
-        if (!data[id] || typeof data[id].usd !== "number") return null;
-        return data[id].usd;
-      } catch (err) {
-        console.error("Price fetch failed", err);
-        return null;
-      }
+    async function fetchPricesForIds(ids) {
+      if (!ids.length) return {};
+      const url =
+        "https://api.coingecko.com/api/v3/simple/price?ids=" +
+        encodeURIComponent(ids.join(",")) +
+        "&vs_currencies=usd";
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Price fetch failed");
+      return await res.json();
     }
 
     function renderTokens() {
@@ -546,46 +563,113 @@
 
       if (!tokens.length) {
         emptyState.style.display = "block";
+      } else {
+        emptyState.style.display = "none";
+      }
+
+      let totalCost = 0;
+      let totalValue = 0;
+
+      tokens.forEach((t) => {
+        const amount = Number(t.amount) || 0;
+        const cost   = Number(t.cost) || Number(t.totalSpent) || 0;
+
+        let lastPrice = Number(t.lastPrice);
+        if (!lastPrice && amount > 0 && cost > 0) {
+          lastPrice = cost / amount;
+        }
+
+        const currentValue = lastPrice * amount;
+        const diff         = currentValue - cost;
+        const isUp         = diff >= 0;
+        const pctChange    = cost > 0 ? (diff / cost) * 100 : 0;
+
+        // keep values synced
+        t.cost      = cost;
+        t.value     = currentValue;
+        t.pnl       = diff;
+        t.lastPrice = lastPrice;
+
+        totalCost  += cost;
+        totalValue += currentValue;
+
+        const tr = document.createElement("tr");
+
+        const leftTd = document.createElement("td");
+        leftTd.innerHTML = `
+          <div class="token-name">${t.name} (${t.symbol})</div>
+          <div class="token-meta">Amount: ${amount}</div>
+        `;
+
+        const midTd = document.createElement("td");
+        midTd.innerHTML = `
+          <div class="token-meta">Buy price</div>
+          <div>$${cost.toFixed(2)}</div>
+        `;
+
+        const rightTd = document.createElement("td");
+        const colorClass = isUp ? "token-pnl-positive" : "token-pnl-negative";
+        rightTd.innerHTML = `
+          <div class="token-meta">Current value</div>
+          <div class="${colorClass}">$${currentValue.toFixed(2)}</div>
+          <div class="token-meta">
+            Change:
+            <span class="${colorClass}">
+              ${
+                cost > 0
+                  ? (isUp ? "+" : "") + pctChange.toFixed(2) + "%"
+                  : "—"
+              }
+            </span>
+          </div>
+        `;
+
+        tr.appendChild(leftTd);
+        tr.appendChild(midTd);
+        tr.appendChild(rightTd);
+        tokenTableBody.appendChild(tr);
+      });
+
+      saveTokens(tokens);
+      updateOverview(totalCost, totalValue);
+    }
+
+    function updateOverview(totalCost, totalValue) {
+      if (!totSummary || !totCards) return;
+
+      if (!tokens.length) {
+        totSummary.innerHTML = `
+          <p class="view-description">
+            Add tokens in the Tracker tab to see an overview here.
+          </p>
+        `;
+        totCards.innerHTML = "";
         return;
       }
 
-      emptyState.style.display = "none";
+      const pnl = totalValue - totalCost;
+      const isUp = pnl >= 0;
+      const pct = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
 
-      tokens.forEach((t) => {
-        const tr = document.createElement("tr");
+      const colorClass = isUp ? "token-pnl-positive" : "token-pnl-negative";
 
-        const nameTd = document.createElement("td");
-        nameTd.innerHTML = `
-          <div class="token-name">${t.name} (${t.symbol})</div>
-          <div class="token-meta">Amount: ${t.amount}</div>
-        `;
-
-        const costTd = document.createElement("td");
-        costTd.innerHTML = `
-          <div class="token-meta">Cost</div>
-          <div>$${t.cost.toFixed(2)}</div>
-        `;
-
-        const valueTd = document.createElement("td");
-        valueTd.innerHTML = `
-          <div class="token-meta">Value</div>
-          <div>$${t.value.toFixed(2)}</div>
-        `;
-
-        const pnlTd = document.createElement("td");
-        const pnlClass = t.pnl >= 0 ? "token-pnl-positive" : "token-pnl-negative";
-        pnlTd.innerHTML = `
-          <div class="token-meta">P/L</div>
-          <div class="${pnlClass}">$${t.pnl.toFixed(2)}</div>
-        `;
-
-        tr.appendChild(nameTd);
-        tr.appendChild(costTd);
-        tr.appendChild(valueTd);
-        tr.appendChild(pnlTd);
-
-        tokenTableBody.appendChild(tr);
-      });
+      totSummary.innerHTML = `
+        <div class="tot-card">
+          <div class="token-name">Total portfolio</div>
+          <div class="token-meta">Cost basis: $${totalCost.toFixed(2)}</div>
+          <div class="token-meta">
+            Current value:
+            <span class="${colorClass}">$${totalValue.toFixed(2)}</span>
+          </div>
+          <div class="token-meta">
+            P/L:
+            <span class="${colorClass}">
+              $${pnl.toFixed(2)} (${totalCost > 0 ? (isUp ? "+" : "") + pct.toFixed(2) : "0.00"}%)
+            </span>
+          </div>
+        </div>
+      `;
+      totCards.innerHTML = "";
     }
 
     tokenFormElement.addEventListener("submit", async (e) => {
@@ -601,20 +685,33 @@
         return;
       }
 
-      const buyPrice = totalSpent / amount;
+      const cost = totalSpent;
+      const buyPrice = cost / amount;
 
-      let lastPrice = await fetchCurrentPrice(symbol);
+      let lastPrice = null;
+      const mappedId = COINGECKO_MAP[symbol];
+
+      try {
+        if (mappedId) {
+          const data = await fetchPricesForIds([mappedId]);
+          if (data[mappedId] && typeof data[mappedId].usd === "number") {
+            lastPrice = data[mappedId].usd;
+          }
+        }
+      } catch (err) {
+        console.error("Price fetch failed, falling back to buy price", err);
+      }
+
       if (lastPrice === null) lastPrice = buyPrice;
 
-      const cost  = totalSpent;
       const value = lastPrice * amount;
       const pnl   = value - cost;
 
       tokens.push({
         name,
         symbol,
-        amount,      // full precision
-        totalSpent,
+        amount,
+        totalSpent: cost,
         buyPrice,
         lastPrice,
         cost,
@@ -630,6 +727,53 @@
       tokenForm.classList.add("hidden");
       addTokenBtn.style.display = "inline-block";
     });
+
+    refreshPricesBtn.addEventListener("click", async () => {
+      if (!tokens.length) {
+        alert("No tokens to refresh yet.");
+        return;
+      }
+
+      const ids = Array.from(
+        new Set(
+          tokens
+            .map((t) => COINGECKO_MAP[t.symbol])
+            .filter(Boolean)
+        )
+      );
+
+      if (!ids.length) {
+        alert("No supported symbols found for price refresh.");
+        return;
+      }
+
+      refreshPricesBtn.disabled = true;
+      refreshPricesBtn.textContent = "Refreshing…";
+
+      try {
+        const data = await fetchPricesForIds(ids);
+
+        tokens.forEach((t) => {
+          const id = COINGECKO_MAP[t.symbol];
+          if (id && data[id] && typeof data[id].usd === "number") {
+            t.lastPrice = data[id].usd;
+            t.value = t.lastPrice * t.amount;
+            t.pnl = t.value - t.cost;
+          }
+        });
+
+        renderTokens();
+      } catch (err) {
+        console.error(err);
+        alert("Error fetching prices. Try again in a moment.");
+      } finally {
+        refreshPricesBtn.disabled = false;
+        refreshPricesBtn.textContent = "Refresh prices";
+      }
+    });
+
+    // Initial render
+    renderTokens();
   </script>
 
 </body>
