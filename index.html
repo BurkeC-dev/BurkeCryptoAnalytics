@@ -279,15 +279,15 @@
       color: rgba(169,176,214,0.7);
     }
 
-    /* prettier card-like container for rows */
+    /* JUST spacing container now – no inner card */
     .table-wrapper {
       margin-top: 1rem;
-      padding: 0.6rem;
-      background: radial-gradient(circle at top left, rgba(19,30,68,0.95), rgba(5,7,22,0.98));
-      border-radius: 20px;
-      border: 1px solid rgba(140,155,255,0.5);
-      box-shadow: 0 18px 40px rgba(0,0,0,0.7);
+      padding: 0.2rem 0 0.4rem;
+      background: transparent;
+      border: none;
+      box-shadow: none;
     }
+
     table {
       width: 100%;
       font-size: .75rem;
@@ -303,12 +303,12 @@
       table td { display: block; }
     }
 
-    /* Card-like token rows */
+    /* Individual token cards */
     .token-row {
       background: radial-gradient(circle at top left, rgba(113,197,255,0.18), rgba(10,12,35,0.98));
       border-radius: 18px;
       padding: 0.75rem 0.9rem;
-      margin: 0.55rem 0.25rem;
+      margin: 0.55rem 0.1rem;
       box-shadow: 0 16px 32px rgba(0,0,0,0.65);
       border: 1px solid rgba(140,155,255,0.6);
     }
@@ -435,7 +435,7 @@
           </form>
         </div>
 
-        <!-- TOKENS TABLE -->
+        <!-- TOKENS LIST -->
         <div class="table-wrapper">
           <table>
             <tbody id="tokenTableBody"></tbody>
