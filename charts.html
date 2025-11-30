@@ -10,6 +10,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 
+  <!-- Chart.js for visual charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     :root {
       --lavender: #dcd0ff;
@@ -245,122 +248,22 @@
 
     .chart-card {
       margin-top: 0.35rem;
-      padding: 0.85rem 0.85rem 0.8rem;
+      padding: 0.9rem 0.85rem 0.8rem;
       background: rgba(6,8,26,0.95);
       border-radius: 18px;
       border: 1px solid rgba(104,122,255,0.4);
     }
 
-    .chart-bar-track {
+    .chart-wrapper {
       position: relative;
       width: 100%;
-      height: 14px;
-      border-radius: 999px;
-      background: rgba(20,24,60,1);
-      overflow: hidden;
-      margin: 0.4rem 0 0.2rem;
-      box-shadow: inset 0 0 0 1px rgba(113,197,255,0.08);
-    }
-
-    .chart-bar-fill {
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      border-radius: 999px;
-      background: linear-gradient(90deg, #bfa8ff, #71c5ff);
-      box-shadow:
-        0 0 4px rgba(113,197,255,0.8),
-        0 0 10px rgba(113,197,255,0.6);
-      transform-origin: left center;
-      transform: scaleX(0);
-    }
-
-    .allocation-legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.3rem 0.6rem;
-      margin-top: 0.35rem;
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-      font-size: 0.7rem;
-      color: var(--text-muted);
       max-width: 100%;
-    }
-
-    .legend-swatch {
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-      background: linear-gradient(135deg, #bfa8ff, #71c5ff);
-      flex-shrink: 0;
-    }
-
-    .token-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.5rem;
       margin-top: 0.4rem;
     }
 
-    .token-main {
-      display: flex;
-      flex-direction: column;
-      gap: 0.05rem;
-      flex: 1;
-      min-width: 0;
-    }
-
-    .token-name {
-      font-size: 0.8rem;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .token-sub {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-    }
-
-    .token-pnl {
-      font-size: 0.8rem;
-      font-weight: 500;
-      white-space: nowrap;
-    }
-
-    .token-pnl.profit {
-      color: var(--profit-green);
-    }
-
-    .token-pnl.loss {
-      color: var(--loss-red);
-    }
-
-    .pnl-bar-track {
-      position: relative;
-      flex: 1.1;
-      height: 10px;
-      border-radius: 999px;
-      background: rgba(20,24,60,1);
-      overflow: hidden;
-      margin-left: 0.3rem;
-      box-shadow: inset 0 0 0 1px rgba(113,197,255,0.07);
-    }
-
-    .pnl-bar-fill {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      border-radius: 999px;
-      transform-origin: center left;
-      transform: scaleX(0);
-      background: linear-gradient(90deg, #ff6b81, #4ade80);
+    .chart-wrapper canvas {
+      width: 100% !important;
+      max-height: 260px;
     }
 
     .empty-state {
@@ -428,23 +331,24 @@
         </div>
       </div>
 
-      <!-- PORTFOLIO ALLOCATION -->
+      <!-- PORTFOLIO ALLOCATION (DOUGHNUT CHART) -->
       <div class="chart-section-title">Portfolio Allocation</div>
-      <div class="chart-card" id="allocationSection">
-        <div class="chart-bar-track">
-          <div class="chart-bar-fill" id="allocationBar"></div>
+      <div class="chart-card">
+        <div class="chart-wrapper" id="allocationWrapper">
+          <canvas id="allocationChart"></canvas>
         </div>
-        <div class="allocation-legend" id="allocationLegend"></div>
         <div class="empty-state" id="allocationEmpty" style="display:none;">
           <strong>No tokens yet.</strong> Add positions in the <em>Tracker</em> tab and we’ll show how your portfolio
           is split across coins here.
         </div>
       </div>
 
-      <!-- PNL BY TOKEN -->
+      <!-- PNL BY TOKEN (BAR CHART) -->
       <div class="chart-section-title">Profit / Loss by Token</div>
-      <div class="chart-card" id="pnlSection">
-        <div id="pnlList"></div>
+      <div class="chart-card">
+        <div class="chart-wrapper" id="pnlWrapper">
+          <canvas id="pnlChart"></canvas>
+        </div>
         <div class="empty-state" id="pnlEmpty" style="display:none;">
           Once you have tokens with a cost basis and a last price, this section will show which coins are
           carrying the gains — and which ones are haunting your bags.
@@ -473,8 +377,7 @@
     });
 
     // ====== CHART LOGIC ======
-    // IMPORTANT:
-    // Update STORAGE_KEY if your tracker uses a different localStorage key.
+    // Change this if your tracker uses a different key:
     const STORAGE_KEY = "bca_tokens_v1";
 
     function loadTokens() {
@@ -489,7 +392,7 @@
       }
     }
 
-    // Tries to be flexible about field names used in tracking.html
+    // Flexible token normalization (works with different field names)
     function normalizeToken(token) {
       const name = token.name || token.tokenName || token.symbol || "Unknown";
       const symbol = token.symbol || token.ticker || "";
@@ -552,6 +455,9 @@
       return (value).toFixed(2) + "%";
     }
 
+    let allocationChartInstance = null;
+    let pnlChartInstance = null;
+
     function renderCharts() {
       const rawTokens = loadTokens();
       const tokens = rawTokens.map(normalizeToken).filter(t => t.quantity || t.currentValue);
@@ -561,15 +467,14 @@
       const totalPnlValueEl = document.getElementById("totalPnlValue");
       const totalPnlPercentEl = document.getElementById("totalPnlPercent");
 
-      const allocationBarEl = document.getElementById("allocationBar");
-      const allocationLegendEl = document.getElementById("allocationLegend");
       const allocationEmptyEl = document.getElementById("allocationEmpty");
-
-      const pnlListEl = document.getElementById("pnlList");
       const pnlEmptyEl = document.getElementById("pnlEmpty");
 
+      const allocationWrapper = document.getElementById("allocationWrapper");
+      const pnlWrapper = document.getElementById("pnlWrapper");
+
+      // If no tokens, reset and show empty states
       if (!tokens.length) {
-        // Reset stats visually
         totalPortfolioEl.firstChild.nodeValue = "$0.00";
         totalTokensLabelEl.textContent = "0 tokens";
 
@@ -577,14 +482,20 @@
         totalPnlPercentEl.textContent = "(0.00%)";
         totalPnlValueEl.classList.remove("pill-profit", "pill-loss");
 
-        allocationBarEl.style.transform = "scaleX(0)";
-        allocationLegendEl.innerHTML = "";
         allocationEmptyEl.style.display = "block";
-
-        pnlListEl.innerHTML = "";
         pnlEmptyEl.style.display = "block";
+        allocationWrapper.style.display = "none";
+        pnlWrapper.style.display = "none";
+
+        if (allocationChartInstance) allocationChartInstance.destroy();
+        if (pnlChartInstance) pnlChartInstance.destroy();
         return;
       }
+
+      allocationWrapper.style.display = "block";
+      pnlWrapper.style.display = "block";
+      allocationEmptyEl.style.display = "none";
+      pnlEmptyEl.style.display = "none";
 
       // === Totals ===
       let totalValue = 0;
@@ -596,13 +507,11 @@
       const totalPnl = totalValue - totalCost;
       const totalPnlPercent = totalCost ? (totalPnl / totalCost) * 100 : 0;
 
-      // Update summary
       totalPortfolioEl.firstChild.nodeValue = formatCurrency(totalValue);
       totalTokensLabelEl.textContent = `${tokens.length} token${tokens.length > 1 ? "s" : ""}`;
 
       totalPnlValueEl.firstChild.nodeValue = formatCurrency(totalPnl);
       totalPnlPercentEl.textContent = `(${formatPercent(totalPnlPercent)})`;
-
       totalPnlValueEl.classList.remove("pill-profit", "pill-loss");
       if (totalPnl > 0) {
         totalPnlValueEl.classList.add("pill-profit");
@@ -610,97 +519,109 @@
         totalPnlValueEl.classList.add("pill-loss");
       }
 
-      // === Allocation chart ===
-      allocationLegendEl.innerHTML = "";
-      allocationEmptyEl.style.display = "none";
+      // === Portfolio Allocation (Doughnut) ===
+      const allocationLabels = tokens.map(t => t.symbol || t.name);
+      const allocationData = tokens.map(t => t.currentValue || 0);
 
-      // We represent allocation by legend + full bar "lit" (since distribution is in legend, not stacked in the bar)
-      // If you want a stacked bar later, we can change this.
-      allocationBarEl.style.transform = "scaleX(1)";
+      const colors = allocationLabels.map((_, idx) => {
+        const hue = (idx * 35) % 360;
+        return `hsl(${hue}, 80%, 70%)`;
+      });
 
-      tokens
-        .sort((a, b) => (b.currentValue || 0) - (a.currentValue || 0))
-        .forEach((t, idx) => {
-          if (!totalValue) return;
-          const share = (t.currentValue || 0) / totalValue * 100;
+      const allocationCtx = document.getElementById("allocationChart").getContext("2d");
+      if (allocationChartInstance) allocationChartInstance.destroy();
+      allocationChartInstance = new Chart(allocationCtx, {
+        type: "doughnut",
+        data: {
+          labels: allocationLabels,
+          datasets: [{
+            data: allocationData,
+            backgroundColor: colors,
+            borderColor: "#050716",
+            borderWidth: 1.5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: {
+                color: "#cbd5ff",
+                font: { size: 11 }
+              },
+              position: "bottom"
+            },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  const label = context.label || "";
+                  const value = context.parsed || 0;
+                  const pct = totalValue ? ((value / totalValue) * 100).toFixed(1) : 0;
+                  return `${label}: ${formatCurrency(value)} (${pct}%)`;
+                }
+              }
+            }
+          },
+          cutout: "65%"
+        }
+      });
 
-          const item = document.createElement("div");
-          item.className = "legend-item";
+      // === PnL by Token (Bar) ===
+      const pnlLabels = tokens.map(t => t.symbol || t.name);
+      const pnlValues = tokens.map(t => t.pnl || 0);
+      const pnlColors = pnlValues.map(v => v >= 0 ? "rgba(74,222,128,0.9)" : "rgba(255,107,129,0.95)");
 
-          const swatch = document.createElement("div");
-          swatch.className = "legend-swatch";
-          // Slight hue shift based on index for subtle variation
-          swatch.style.filter = `hue-rotate(${idx * 25}deg)`;
-
-          const label = document.createElement("div");
-          label.textContent = `${t.symbol || t.name} – ${share.toFixed(1)}%`;
-
-          item.appendChild(swatch);
-          item.appendChild(label);
-          allocationLegendEl.appendChild(item);
-        });
-
-      // === PnL by token ===
-      pnlListEl.innerHTML = "";
-      pnlEmptyEl.style.display = "none";
-
-      const maxAbsPnl = tokens.reduce((max, t) => {
-        const val = Math.abs(t.pnl || 0);
-        return val > max ? val : max;
-      }, 0) || 1;
-
-      tokens
-        .slice() // copy
-        .sort((a, b) => (b.pnl || 0) - (a.pnl || 0))
-        .forEach((t, idx) => {
-          const row = document.createElement("div");
-          row.className = "token-row";
-
-          const main = document.createElement("div");
-          main.className = "token-main";
-
-          const nameEl = document.createElement("div");
-          nameEl.className = "token-name";
-          nameEl.textContent = t.symbol ? `${t.symbol}` : t.name;
-
-          const subEl = document.createElement("div");
-          subEl.className = "token-sub";
-          const v = formatCurrency(t.currentValue || 0);
-          const q = t.quantity || 0;
-          subEl.textContent = `${v} • ${q} ${t.symbol || ""}`.trim();
-
-          main.appendChild(nameEl);
-          main.appendChild(subEl);
-
-          const pnlText = document.createElement("div");
-          pnlText.className = "token-pnl";
-          const isProfit = (t.pnl || 0) > 0;
-          const isLoss = (t.pnl || 0) < 0;
-          if (isProfit) pnlText.classList.add("profit");
-          if (isLoss) pnlText.classList.add("loss");
-
-          const sign = (t.pnl || 0) > 0 ? "+" : "";
-          pnlText.textContent =
-            `${sign}${formatCurrency(t.pnl || 0)} (${sign}${formatPercent(t.pnlPercent || 0)})`;
-
-          const barTrack = document.createElement("div");
-          barTrack.className = "pnl-bar-track";
-
-          const barFill = document.createElement("div");
-          barFill.className = "pnl-bar-fill";
-          const ratio = Math.min(Math.abs(t.pnl || 0) / maxAbsPnl, 1);
-          barFill.style.transform = `scaleX(${ratio})`;
-          // Shift gradient so red if negative, green if positive
-          barFill.style.backgroundPosition = (t.pnl || 0) >= 0 ? "100% 0" : "0 0";
-
-          barTrack.appendChild(barFill);
-
-          row.appendChild(main);
-          row.appendChild(barTrack);
-          row.appendChild(pnlText);
-
-          pnlListEl.appendChild(row);
-        });
+      const pnlCtx = document.getElementById("pnlChart").getContext("2d");
+      if (pnlChartInstance) pnlChartInstance.destroy();
+      pnlChartInstance = new Chart(pnlCtx, {
+        type: "bar",
+        data: {
+          labels: pnlLabels,
+          datasets: [{
+            data: pnlValues,
+            backgroundColor: pnlColors,
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              ticks: {
+                color: "#cbd5ff",
+                font: { size: 11 }
+              },
+              grid: { display: false }
+            },
+            y: {
+              ticks: {
+                color: "#a9b0d6",
+                callback: (value) => formatCurrency(value)
+              },
+              grid: {
+                color: "rgba(148,163,255,0.2)",
+                drawBorder: false
+              }
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  const v = context.parsed.y || 0;
+                  const sign = v > 0 ? "+" : "";
+                  const token = tokens[context.dataIndex];
+                  const pct = token ? token.pnlPercent || 0 : 0;
+                  return `${sign}${formatCurrency(v)} (${sign}${formatPercent(pct)})`;
+                }
+              }
+            }
+          }
+        }
+      });
     }
 
     document.addEventListener("DOMContentLoaded", renderCharts);
