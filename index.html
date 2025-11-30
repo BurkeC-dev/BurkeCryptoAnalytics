@@ -279,42 +279,51 @@
       color: rgba(169,176,214,0.7);
     }
 
-    /* JUST spacing container now – no inner card */
-    .table-wrapper {
+    /* Tokens list container (no inner card box) */
+    .tokens-list {
       margin-top: 1rem;
-      padding: 0.2rem 0 0.4rem;
-      background: transparent;
-      border: none;
-      box-shadow: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
     }
 
-    table {
-      width: 100%;
-      font-size: .75rem;
-      color: var(--text-main);
-      border-collapse: collapse;
-    }
-    td {
-      padding: .25rem 0;
-      border-top: none;
-    }
-    @media (max-width: 600px) {
-      table thead { display: none; }
-      table td { display: block; }
+    /* Individual soft-glow token cards */
+    .token-card {
+      border-radius: 20px;
+      padding: 0.85rem 1rem;
+      background:
+        radial-gradient(circle at top left, rgba(113,197,255,0.2), rgba(10,12,35,0.98));
+      border: 1px solid rgba(140,155,255,0.7);
+      box-shadow:
+        0 18px 40px rgba(0,0,0,0.75),
+        0 0 8px rgba(113,197,255,0.4);
     }
 
-    /* Individual token cards */
-    .token-row {
-      background: radial-gradient(circle at top left, rgba(113,197,255,0.18), rgba(10,12,35,0.98));
-      border-radius: 18px;
-      padding: 0.75rem 0.9rem;
-      margin: 0.55rem 0.1rem;
-      box-shadow: 0 16px 32px rgba(0,0,0,0.65);
-      border: 1px solid rgba(140,155,255,0.6);
+    .token-card-header {
+      font-weight: 600;
+      margin-bottom: 0.15rem;
     }
 
-    .token-row td {
-      padding: 0.2rem 0;
+    .token-card-amount {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      margin-bottom: 0.55rem;
+    }
+
+    .token-row-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      margin: 0.1rem 0;
+    }
+
+    .token-row-label {
+      color: var(--text-muted);
+    }
+
+    .token-row-value {
+      font-weight: 500;
     }
 
     .token-name { font-weight: 600; }
@@ -333,6 +342,12 @@
       border-radius: 999px;
       background: rgba(10,12,35,0.95);
       border: 1px solid currentColor;
+    }
+
+    #emptyState {
+      margin-top: 0.8rem;
+      font-size: 0.78rem;
+      color: var(--text-muted);
     }
   </style>
 </head>
@@ -436,12 +451,8 @@
         </div>
 
         <!-- TOKENS LIST -->
-        <div class="table-wrapper">
-          <table>
-            <tbody id="tokenTableBody"></tbody>
-          </table>
-          <p id="emptyState">No tokens yet.</p>
-        </div>
+        <div class="tokens-list" id="tokensList"></div>
+        <p id="emptyState">No tokens yet.</p>
       </section>
 
     </main>
@@ -491,7 +502,7 @@
     const coinAmountInput  = document.getElementById("coinAmount");
     const totalSpentInput  = document.getElementById("totalSpent");
 
-    const tokenTableBody   = document.getElementById("tokenTableBody");
+    const tokensList       = document.getElementById("tokensList");
     const emptyState       = document.getElementById("emptyState");
 
     const tokens = [];
@@ -557,7 +568,7 @@
     }
 
     function renderTokens() {
-      tokenTableBody.innerHTML = "";
+      tokensList.innerHTML = "";
 
       if (!tokens.length) {
         emptyState.style.display = "block";
@@ -567,48 +578,39 @@
       emptyState.style.display = "none";
 
       tokens.forEach((t) => {
-        const tr = document.createElement("tr");
-        tr.className = "token-row";
-
         const isProfit = t.pnl >= 0;
         const pnlLabel = isProfit ? "Profit" : "Loss";
         const pnlClass = isProfit ? "token-pnl-positive" : "token-pnl-negative";
         const sign = isProfit ? "+" : "";
         const pct = t.cost !== 0 ? (t.pnl / t.cost) * 100 : 0;
 
-        const nameTd = document.createElement("td");
-        nameTd.innerHTML = `
-          <div class="token-name">${t.name} (${t.symbol})</div>
-          <div class="token-meta">Amount: ${t.amount}</div>
-        `;
+        const card = document.createElement("div");
+        card.className = "token-card";
 
-        const costTd = document.createElement("td");
-        costTd.innerHTML = `
-          <div class="token-meta">Cost</div>
-          <div>$${t.cost.toFixed(2)}</div>
-        `;
+        card.innerHTML = `
+          <div class="token-card-header">${t.name} (${t.symbol})</div>
+          <div class="token-card-amount">Amount: ${t.amount}</div>
 
-        const valueTd = document.createElement("td");
-        valueTd.innerHTML = `
-          <div class="token-meta">Value</div>
-          <div class="${pnlClass}">
-            $${t.value.toFixed(2)}
-            <span class="token-pct ${pnlClass}">${sign}${pct.toFixed(2)}%</span>
+          <div class="token-row-line">
+            <div class="token-row-label">Cost</div>
+            <div class="token-row-value">$${t.cost.toFixed(2)}</div>
+          </div>
+
+          <div class="token-row-line">
+            <div class="token-row-label">Value</div>
+            <div class="token-row-value ${pnlClass}">
+              $${t.value.toFixed(2)}
+              <span class="token-pct ${pnlClass}">${sign}${pct.toFixed(2)}%</span>
+            </div>
+          </div>
+
+          <div class="token-row-line">
+            <div class="token-row-label">${pnlLabel}</div>
+            <div class="token-row-value ${pnlClass}">$${t.pnl.toFixed(2)}</div>
           </div>
         `;
 
-        const pnlTd = document.createElement("td");
-        pnlTd.innerHTML = `
-          <div class="token-meta">${pnlLabel}</div>
-          <div class="${pnlClass}">$${t.pnl.toFixed(2)}</div>
-        `;
-
-        tr.appendChild(nameTd);
-        tr.appendChild(costTd);
-        tr.appendChild(valueTd);
-        tr.appendChild(pnlTd);
-
-        tokenTableBody.appendChild(tr);
+        tokensList.appendChild(card);
       });
     }
 
