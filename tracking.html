@@ -214,13 +214,33 @@
       cursor: pointer;
     }
 
+    /* ---------- OVERLAY MODALS ---------- */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(18px);
+      background: rgba(5, 7, 22, 0.7);
+      z-index: 1000;
+    }
+    .overlay.hidden {
+      display: none;
+    }
+
     .token-form {
-      margin-top: 1rem;
+      width: 100%;
+      max-width: 420px;
+      margin: 0;
       padding: 1rem;
-      background: rgba(16,18,45,0.95);
+      background: rgba(16,18,45,0.98);
       border-radius: 18px;
-      border: 1px solid rgba(140,155,255,0.45);
+      border: 1px solid rgba(140,155,255,0.7);
       position: relative;
+      box-shadow:
+        0 18px 40px rgba(0,0,0,0.8),
+        0 0 8px rgba(113,197,255,0.4);
     }
 
     .token-form-header {
@@ -278,7 +298,7 @@
       color: rgba(169,176,214,0.7);
     }
 
-    /* Tokens list container (no inner card box) */
+    /* Tokens list container */
     .tokens-list {
       margin-top: 1rem;
       display: flex;
@@ -286,7 +306,7 @@
       gap: 0.7rem;
     }
 
-    /* Individual soft-glow token cards */
+    /* Token cards */
     .token-card {
       position: relative;
       border-radius: 20px;
@@ -337,7 +357,6 @@
     .token-pnl-positive { color: var(--success); }
     .token-pnl-negative { color: var(--danger); }
 
-    /* little pill for percentage next to value */
     .token-pct {
       margin-left: 0.4rem;
       font-size: 0.7rem;
@@ -431,85 +450,89 @@
       <button id="addTokenBtn" class="primary-pill">Add token</button>
       <button id="refreshPricesBtn" class="ghost-pill">Refresh prices</button>
 
-      <!-- TOKEN FORM PANEL (NEW / EDIT) -->
-      <div id="tokenForm" class="token-form hidden">
-        <div class="token-form-header">
-          <div>
-            <div class="token-form-title" id="tokenFormTitle">New token entry</div>
-            <div class="token-form-subtext" id="tokenFormSubtitle">
-              Choose a coin, log your entry, we’ll track the rest.
+      <!-- TOKEN FORM OVERLAY (NEW / EDIT) -->
+      <div id="tokenFormOverlay" class="overlay hidden">
+        <div id="tokenForm" class="token-form">
+          <div class="token-form-header">
+            <div>
+              <div class="token-form-title" id="tokenFormTitle">New token entry</div>
+              <div class="token-form-subtext" id="tokenFormSubtitle">
+                Choose a coin, log your entry, we’ll track the rest.
+              </div>
             </div>
+            <button class="token-form-close" id="tokenFormClose">×</button>
           </div>
-          <button class="token-form-close" id="tokenFormClose">×</button>
+
+          <form id="tokenFormElement">
+            <div class="form-row">
+              <label class="form-label" for="quickCoinSelect">Quick coin select</label>
+              <select id="quickCoinSelect" class="token-select">
+                <option value="">Choose a popular coin…</option>
+                <option value="bitcoin|BTC|Bitcoin">Bitcoin (BTC)</option>
+                <option value="ethereum|ETH|Ethereum">Ethereum (ETH)</option>
+                <option value="solana|SOL|Solana">Solana (SOL)</option>
+                <option value="ripple|XRP|XRP">XRP (XRP)</option>
+                <option value="dogecoin|DOGE|Dogecoin">Dogecoin (DOGE)</option>
+                <option value="cardano|ADA|Cardano">Cardano (ADA)</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <label class="form-label" for="coinName">Name of coin</label>
+              <input id="coinName" class="token-input" type="text" placeholder="e.g. Bitcoin" required />
+            </div>
+
+            <div class="form-row">
+              <label class="form-label" for="coinSymbol">Symbol / ticker</label>
+              <input id="coinSymbol" class="token-input" type="text" placeholder="e.g. BTC" required />
+            </div>
+
+            <div class="form-row">
+              <label class="form-label" id="amountLabel" for="coinAmount">Amount of coin bought</label>
+              <input id="coinAmount" class="token-input" type="number" min="0" step="0.00000001" placeholder="e.g. 0.00457278" required />
+            </div>
+
+            <div class="form-row">
+              <label class="form-label" for="totalSpent">Total spent (USD)</label>
+              <input id="totalSpent" class="token-input" type="number" min="0" step="0.01" placeholder="e.g. 411" required />
+            </div>
+
+            <div class="form-row" style="margin-top:0.8rem;">
+              <button type="submit" class="primary-pill">Save token</button>
+            </div>
+          </form>
         </div>
-
-        <form id="tokenFormElement">
-          <div class="form-row">
-            <label class="form-label" for="quickCoinSelect">Quick coin select</label>
-            <select id="quickCoinSelect" class="token-select">
-              <option value="">Choose a popular coin…</option>
-              <option value="bitcoin|BTC|Bitcoin">Bitcoin (BTC)</option>
-              <option value="ethereum|ETH|Ethereum">Ethereum (ETH)</option>
-              <option value="solana|SOL|Solana">Solana (SOL)</option>
-              <option value="ripple|XRP|XRP">XRP (XRP)</option>
-              <option value="dogecoin|DOGE|Dogecoin">Dogecoin (DOGE)</option>
-              <option value="cardano|ADA|Cardano">Cardano (ADA)</option>
-            </select>
-          </div>
-
-          <div class="form-row">
-            <label class="form-label" for="coinName">Name of coin</label>
-            <input id="coinName" class="token-input" type="text" placeholder="e.g. Bitcoin" required />
-          </div>
-
-          <div class="form-row">
-            <label class="form-label" for="coinSymbol">Symbol / ticker</label>
-            <input id="coinSymbol" class="token-input" type="text" placeholder="e.g. BTC" required />
-          </div>
-
-          <div class="form-row">
-            <label class="form-label" id="amountLabel" for="coinAmount">Amount of coin bought</label>
-            <input id="coinAmount" class="token-input" type="number" min="0" step="0.00000001" placeholder="e.g. 0.00457278" required />
-          </div>
-
-          <div class="form-row">
-            <label class="form-label" for="totalSpent">Total spent (USD)</label>
-            <input id="totalSpent" class="token-input" type="number" min="0" step="0.01" placeholder="e.g. 411" required />
-          </div>
-
-          <div class="form-row" style="margin-top:0.8rem;">
-            <button type="submit" class="primary-pill">Save token</button>
-          </div>
-        </form>
       </div>
 
-      <!-- ADD MORE FORM PANEL -->
-      <div id="addMoreForm" class="token-form hidden">
-        <div class="token-form-header">
-          <div>
-            <div class="token-form-title" id="addMoreTitle">Add more</div>
-            <div class="token-form-subtext" id="addMoreSubtitle">
-              Add more to this position.
+      <!-- ADD MORE OVERLAY -->
+      <div id="addMoreOverlay" class="overlay hidden">
+        <div id="addMoreForm" class="token-form">
+          <div class="token-form-header">
+            <div>
+              <div class="token-form-title" id="addMoreTitle">Add more</div>
+              <div class="token-form-subtext" id="addMoreSubtitle">
+                Add more to this position.
+              </div>
             </div>
+            <button class="token-form-close" id="addMoreClose">×</button>
           </div>
-          <button class="token-form-close" id="addMoreClose">×</button>
+
+          <form id="addMoreFormElement">
+            <div class="form-row">
+              <label class="form-label" id="addMoreAmountLabel" for="addMoreAmount">Additional amount bought</label>
+              <input id="addMoreAmount" class="token-input" type="number" min="0" step="0.00000001" placeholder="e.g. 0.001" required />
+            </div>
+
+            <div class="form-row">
+              <label class="form-label" for="addMoreUsd">Additional spent (USD)</label>
+              <input id="addMoreUsd" class="token-input" type="number" min="0" step="0.01" placeholder="e.g. 75" required />
+            </div>
+
+            <div class="form-row" style="margin-top:0.8rem;">
+              <button type="submit" class="primary-pill">Save</button>
+            </div>
+          </form>
         </div>
-
-        <form id="addMoreFormElement">
-          <div class="form-row">
-            <label class="form-label" id="addMoreAmountLabel" for="addMoreAmount">Additional amount bought</label>
-            <input id="addMoreAmount" class="token-input" type="number" min="0" step="0.00000001" placeholder="e.g. 0.001" required />
-          </div>
-
-          <div class="form-row">
-            <label class="form-label" for="addMoreUsd">Additional spent (USD)</label>
-            <input id="addMoreUsd" class="token-input" type="number" min="0" step="0.01" placeholder="e.g. 75" required />
-          </div>
-
-          <div class="form-row" style="margin-top:0.8rem;">
-            <button type="submit" class="primary-pill">Save</button>
-          </div>
-        </form>
       </div>
 
       <!-- TOKENS LIST -->
@@ -532,13 +555,17 @@
     });
 
     /* TOKEN FORM + TRACKER LOGIC */
-    const addTokenBtn      = document.getElementById("addTokenBtn");
-    const tokenForm        = document.getElementById("tokenForm");
-    const tokenFormClose   = document.getElementById("tokenFormClose");
-    const tokenFormElement = document.getElementById("tokenFormElement");
-    const tokenFormTitle   = document.getElementById("tokenFormTitle");
-    const tokenFormSubtitle= document.getElementById("tokenFormSubtitle");
+    const addTokenBtn        = document.getElementById("addTokenBtn");
+    const refreshPricesBtn   = document.getElementById("refreshPricesBtn");
 
+    const tokenFormOverlay   = document.getElementById("tokenFormOverlay");
+    const tokenForm          = document.getElementById("tokenForm");
+    const tokenFormClose     = document.getElementById("tokenFormClose");
+    const tokenFormElement   = document.getElementById("tokenFormElement");
+    const tokenFormTitle     = document.getElementById("tokenFormTitle");
+    const tokenFormSubtitle  = document.getElementById("tokenFormSubtitle");
+
+    const addMoreOverlay       = document.getElementById("addMoreOverlay");
     const addMoreForm          = document.getElementById("addMoreForm");
     const addMoreClose         = document.getElementById("addMoreClose");
     const addMoreFormElement   = document.getElementById("addMoreFormElement");
@@ -548,15 +575,15 @@
     const addMoreSubtitle      = document.getElementById("addMoreSubtitle");
     const addMoreAmountLabel   = document.getElementById("addMoreAmountLabel");
 
-    const quickCoinSelect  = document.getElementById("quickCoinSelect");
-    const coinNameInput    = document.getElementById("coinName");
-    const coinSymbolInput  = document.getElementById("coinSymbol");
-    const amountLabel      = document.getElementById("amountLabel");
-    const coinAmountInput  = document.getElementById("coinAmount");
-    const totalSpentInput  = document.getElementById("totalSpent");
+    const quickCoinSelect    = document.getElementById("quickCoinSelect");
+    const coinNameInput      = document.getElementById("coinName");
+    const coinSymbolInput    = document.getElementById("coinSymbol");
+    const amountLabel        = document.getElementById("amountLabel");
+    const coinAmountInput    = document.getElementById("coinAmount");
+    const totalSpentInput    = document.getElementById("totalSpent");
 
-    const tokensList       = document.getElementById("tokensList");
-    const emptyState       = document.getElementById("emptyState");
+    const tokensList         = document.getElementById("tokensList");
+    const emptyState         = document.getElementById("emptyState");
 
     const STORAGE_KEY = "bca_tokens_v1";
     let tokens = [];
@@ -570,9 +597,9 @@
       ADA: "cardano"
     };
 
-    let formMode = "new";      // "new" | "edit"
-    let editingIndex = null;   // index in tokens[]
-    let addMoreIndex = null;   // index in tokens[]
+    let formMode    = "new";   // "new" | "edit"
+    let editingIndex = null;
+    let addMoreIndex = null;
 
     function loadTokens() {
       try {
@@ -591,17 +618,13 @@
       }
     }
 
-    addTokenBtn.addEventListener("click", () => {
-      formMode = "new";
-      editingIndex = null;
-      tokenFormTitle.textContent = "New token entry";
-      tokenFormSubtitle.textContent = "Choose a coin, log your entry, we’ll track the rest.";
-      tokenForm.classList.remove("hidden");
+    // Helpers to open/close overlays
+    function openTokenForm() {
+      tokenFormOverlay.classList.remove("hidden");
       addTokenBtn.style.display = "none";
-    });
-
+    }
     function closeTokenForm() {
-      tokenForm.classList.add("hidden");
+      tokenFormOverlay.classList.add("hidden");
       addTokenBtn.style.display = "inline-block";
       tokenFormElement.reset();
       quickCoinSelect.value = "";
@@ -610,7 +633,35 @@
       editingIndex = null;
     }
 
+    function openAddMoreForm() {
+      addMoreOverlay.classList.remove("hidden");
+      addTokenBtn.style.display = "none";
+    }
+    function closeAddMoreForm() {
+      addMoreOverlay.classList.add("hidden");
+      addMoreFormElement.reset();
+      addMoreIndex = null;
+      addTokenBtn.style.display = "inline-block";
+    }
+
+    addTokenBtn.addEventListener("click", () => {
+      formMode = "new";
+      editingIndex = null;
+      tokenFormTitle.textContent = "New token entry";
+      tokenFormSubtitle.textContent = "Choose a coin, log your entry, we’ll track the rest.";
+      openTokenForm();
+    });
+
     tokenFormClose.addEventListener("click", closeTokenForm);
+    addMoreClose.addEventListener("click", closeAddMoreForm);
+
+    // click on dark overlay background closes the modals
+    tokenFormOverlay.addEventListener("click", (e) => {
+      if (e.target === tokenFormOverlay) closeTokenForm();
+    });
+    addMoreOverlay.addEventListener("click", (e) => {
+      if (e.target === addMoreOverlay) closeAddMoreForm();
+    });
 
     function updateAmountLabel() {
       const sym = coinSymbolInput.value.trim().toUpperCase();
@@ -749,8 +800,7 @@
         totalSpentInput.value = t.totalSpent;
         updateAmountLabel();
 
-        tokenForm.classList.remove("hidden");
-        addTokenBtn.style.display = "none";
+        openTokenForm();
       } else if (action === "add") {
         const t = tokens[index];
         addMoreIndex = index;
@@ -759,19 +809,9 @@
         addMoreSubtitle.textContent = `Add more ${t.symbol} and USD spent to this position.`;
         addMoreAmountLabel.textContent = `${t.symbol} bought`;
 
-        addMoreForm.classList.remove("hidden");
-        addTokenBtn.style.display = "none";
+        openAddMoreForm();
       }
     });
-
-    function closeAddMoreForm() {
-      addMoreForm.classList.add("hidden");
-      addMoreFormElement.reset();
-      addMoreIndex = null;
-      addTokenBtn.style.display = "inline-block";
-    }
-
-    addMoreClose.addEventListener("click", closeAddMoreForm);
 
     tokenFormElement.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -863,6 +903,22 @@
       saveTokens();
       renderTokens();
       closeAddMoreForm();
+    });
+
+    // Refresh prices button
+    refreshPricesBtn.addEventListener("click", async () => {
+      if (!tokens.length) return;
+      for (let i = 0; i < tokens.length; i++) {
+        const t = tokens[i];
+        const p = await fetchCurrentPrice(t.symbol);
+        if (p !== null) {
+          t.lastPrice = p;
+          t.value     = p * t.amount;
+          t.pnl       = t.value - t.cost;
+        }
+      }
+      saveTokens();
+      renderTokens();
     });
 
     // Load saved tokens on startup
