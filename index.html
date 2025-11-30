@@ -293,7 +293,6 @@
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      margin-bottom: 0.25rem;
       gap: 0.4rem;
     }
 
@@ -302,27 +301,10 @@
       font-size: 0.8rem;
     }
 
-    .mini-amount {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      margin-bottom: 0.25rem;
-    }
-
-    .mini-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 0.1rem;
-    }
-
-    .mini-label {
-      color: var(--text-muted);
-      font-size: 0.72rem;
-    }
-
     .mini-value {
       font-size: 0.78rem;
       font-weight: 500;
+      text-align: right;
     }
 
     .mini-pct {
@@ -520,7 +502,7 @@
 
       statTokenCount.textContent = tokens.length.toString();
 
-      // Per-token mini list
+      // Per-token mini list (single top line only)
       tokensSection.classList.remove("hidden");
       tokensList.innerHTML = "";
 
@@ -546,15 +528,6 @@
                 ${pctSignToken}${Math.abs(pct).toFixed(2)}%
               </span>
             </div>
-          </div>
-          <div class="mini-amount">Amount: ${safeNumber(t.amount ?? 0)}</div>
-          <div class="mini-row">
-            <div class="mini-label">Value</div>
-            <div class="mini-value">$${formatMoney(value)}</div>
-          </div>
-          <div class="mini-row">
-            <div class="mini-label">Cost</div>
-            <div class="mini-value">$${formatMoney(cost)}</div>
           </div>
         `;
 
