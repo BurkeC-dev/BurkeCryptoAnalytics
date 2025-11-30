@@ -204,7 +204,12 @@
       box-shadow:
         0 0 3px var(--blue),
         0 0 7px rgba(113,197,255,0.8);
+      transition: opacity 0.15s ease, transform 0.1s ease;
     }
+    .primary-pill:active {
+      transform: scale(0.98);
+    }
+
     .ghost-pill {
       background: transparent;
       border: 1px solid rgba(165, 177, 255, 0.5);
@@ -212,6 +217,21 @@
       padding: 0.55rem 1.2rem;
       border-radius: 999px;
       cursor: pointer;
+      transition: opacity 0.15s ease, transform 0.1s ease;
+    }
+    .ghost-pill:active {
+      transform: scale(0.98);
+    }
+
+    .pill-busy {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    #lastUpdated {
+      margin-top: 0.4rem;
+      font-size: 0.7rem;
+      color: var(--text-muted);
     }
 
     /* ---------- OVERLAY MODALS ---------- */
@@ -449,6 +469,7 @@
 
       <button id="addTokenBtn" class="primary-pill">Add token</button>
       <button id="refreshPricesBtn" class="ghost-pill">Refresh prices</button>
+      <p id="lastUpdated"></p>
 
       <!-- TOKEN FORM OVERLAY (NEW / EDIT) -->
       <div id="tokenFormOverlay" class="overlay hidden">
@@ -557,6 +578,7 @@
     /* TOKEN FORM + TRACKER LOGIC */
     const addTokenBtn        = document.getElementById("addTokenBtn");
     const refreshPricesBtn   = document.getElementById("refreshPricesBtn");
+    const lastUpdatedEl      = document.getElementById("lastUpdated");
 
     const tokenFormOverlay   = document.getElementById("tokenFormOverlay");
     const tokenForm          = document.getElementById("tokenForm");
@@ -597,7 +619,7 @@
       ADA: "cardano"
     };
 
-    let formMode    = "new";   // "new" | "edit"
+    let formMode     = "new";   // "new" | "edit"
     let editingIndex = null;
     let addMoreIndex = null;
 
@@ -702,6 +724,15 @@
         console.error("Price fetch failed", err);
         return null;
       }
+    }
+
+    function formatTimestamp() {
+      const d = new Date();
+      const hours = d.getHours();
+      const minutes = d.getMinutes().toString().padStart(2, "0");
+      const ampm = hours >= 12 ? "PM" : "AM";
+      const hr12 = hours % 12 || 12;
+      return `${hr12}:${minutes} ${ampm}`;
     }
 
     function renderTokens() {
@@ -905,20 +936,42 @@
       closeAddMoreForm();
     });
 
-    // Refresh prices button
+    // Refresh prices button with feedback
     refreshPricesBtn.addEventListener("click", async () => {
       if (!tokens.length) return;
-      for (let i = 0; i < tokens.length; i++) {
-        const t = tokens[i];
-        const p = await fetchCurrentPrice(t.symbol);
-        if (p !== null) {
-          t.lastPrice = p;
-          t.value     = p * t.amount;
-          t.pnl       = t.value - t.cost;
+
+      refreshPricesBtn.classList.add("pill-busy");
+      const originalText = refreshPricesBtn.textContent;
+      refreshPricesBtn.textContent = "Refreshing…";
+
+      let updatedCount = 0;
+
+      try {
+        for (let i = 0; i < tokens.length; i++) {
+          const t = tokens[i];
+          const p = await fetchCurrentPrice(t.symbol);
+          if (p !== null) {
+            t.lastPrice = p;
+            t.value     = p * t.amount;
+            t.pnl       = t.value - t.cost;
+            updatedCount++;
+          }
         }
+
+        if (updatedCount > 0) {
+          saveTokens();
+          renderTokens();
+          lastUpdatedEl.textContent = `Last updated: ${formatTimestamp()} (${updatedCount} token${updatedCount > 1 ? "s" : ""})`;
+        } else {
+          lastUpdatedEl.textContent = "No prices refreshed (only BTC, ETH, SOL, XRP, DOGE, ADA are supported right now).";
+        }
+      } catch (err) {
+        console.error("Refresh failed", err);
+        lastUpdatedEl.textContent = "Could not refresh prices (network error).";
+      } finally {
+        refreshPricesBtn.classList.remove("pill-busy");
+        refreshPricesBtn.textContent = originalText;
       }
-      saveTokens();
-      renderTokens();
     });
 
     // Load saved tokens on startup
