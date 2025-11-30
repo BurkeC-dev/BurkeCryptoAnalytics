@@ -349,10 +349,11 @@
       color: var(--red);
     }
 
+    /* 🔹 Only thing changed: footer layout inside each token card */
     .token-footer {
       margin-top: 0.65rem;
       display: flex;
-      flex-direction: column;
+      flex-direction: column;    /* stack the left block and buttons vertically */
       align-items: flex-start;
       gap: 0.4rem;
       font-size: 0.75rem;
@@ -361,7 +362,7 @@
     .token-actions {
       display: flex;
       gap: 0.35rem;
-      align-self: flex-end;
+      align-self: flex-end;      /* push Edit/Delete to the right */
     }
 
     .change-label {
@@ -374,6 +375,16 @@
     .change-value {
       font-size: 0.88rem;
       font-weight: 600;
+    }
+
+    .icon-btn {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      padding: 0.15rem 0.5rem;
+      cursor: pointer;
     }
 
     .token-empty {
@@ -414,6 +425,7 @@
         </button>
       </div>
 
+      <!-- Add token panel -->
       <div class="panel" id="addTokenPanel">
         <div class="panel-header" id="panelHeader">
           <div>
@@ -474,6 +486,7 @@
         </div>
       </div>
 
+      <!-- Token cards -->
       <div class="token-list" id="tokenList"></div>
       <div id="emptyMessage" class="token-empty" style="display: none;">
         No tokens yet. Add your first one above and then tap “Refresh prices”.
@@ -482,6 +495,7 @@
   </div>
 
   <script>
+    // --- Local storage helpers ---
     const STORAGE_KEY = "burke_crypto_tokens_v1";
 
     function loadTokens() {
@@ -500,6 +514,7 @@
 
     let tokens = loadTokens();
 
+    // --- DOM elements ---
     const tokenListEl = document.getElementById("tokenList");
     const emptyMessageEl = document.getElementById("emptyMessage");
 
@@ -519,6 +534,7 @@
 
     let editingId = null;
 
+    // --- Panel toggle ---
     function setPanelOpen(open) {
       if (open) {
         panelBody.classList.add("open");
@@ -544,6 +560,7 @@
       }
     });
 
+    // --- Helpers ---
     function formatCurrency(value) {
       if (!isFinite(value)) return "—";
       return value.toLocaleString("en-US", {
@@ -567,6 +584,7 @@
       return map[s] || "";
     }
 
+    // --- Render tokens ---
     function renderTokens() {
       tokenListEl.innerHTML = "";
 
@@ -588,6 +606,7 @@
         const isUp = diff >= 0;
         const pctChange = costUsd > 0 ? (diff / costUsd) * 100 : 0;
 
+        // header + metrics + change block
         card.innerHTML = `
           <div class="token-header">
             <div>
@@ -609,15 +628,13 @@
             </div>
             <span class="pill">${token.apiId || "manual"}</span>
           </div>
-
           <div class="token-grid">
             <div>
               <div class="metric-label">Buy price (total)</div>
               <div class="metric-value">
                 ${formatCurrency(costUsd)}
-              </div> 
+              </div>
             </div>
-
             <div>
               <div class="metric-label">Current value</div>
               <div class="metric-value ${
@@ -631,7 +648,6 @@
               </div>
             </div>
           </div>
-
           <div class="token-footer">
             <div>
               <div class="change-label">Change</div>
@@ -645,7 +661,6 @@
                 }
               </div>
             </div>
-
             <div class="token-actions">
               <button class="icon-btn" data-action="edit">Edit</button>
               <button class="icon-btn" data-action="delete">Delete</button>
@@ -653,6 +668,7 @@
           </div>
         `;
 
+        // action handlers
         card
           .querySelector('[data-action="edit"]')
           .addEventListener("click", () => {
@@ -684,6 +700,7 @@
       });
     }
 
+    // --- Form submit ---
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       const name = nameInput.value.trim();
@@ -728,6 +745,7 @@
       editingId = null;
     });
 
+    // --- Refresh prices ---
     async function refreshPrices() {
       const ids = Array.from(
         new Set(
@@ -774,6 +792,7 @@
 
     refreshBtn.addEventListener("click", refreshPrices);
 
+    // --- Initial render ---
     renderTokens();
   </script>
 </body>
