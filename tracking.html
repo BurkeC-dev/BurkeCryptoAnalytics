@@ -495,7 +495,13 @@
                 <option value="ripple|XRP|XRP">XRP (XRP)</option>
                 <option value="dogecoin|DOGE|Dogecoin">Dogecoin (DOGE)</option>
                 <option value="cardano|ADA|Cardano">Cardano (ADA)</option>
+                <option value="__custom__">Other / custom token…</option>
               </select>
+            </div>
+
+            <div class="form-row hidden" id="cgIdRow">
+              <label class="form-label" for="coingeckoId">CoinGecko ID (advanced)</label>
+              <input id="coingeckoId" class="token-input" type="text" placeholder="e.g. dogwifcoin" />
             </div>
 
             <div class="form-row">
@@ -598,6 +604,8 @@
     const addMoreAmountLabel   = document.getElementById("addMoreAmountLabel");
 
     const quickCoinSelect    = document.getElementById("quickCoinSelect");
+    const cgIdRow            = document.getElementById("cgIdRow");
+    const cgIdInput          = document.getElementById("coingeckoId");
     const coinNameInput      = document.getElementById("coinName");
     const coinSymbolInput    = document.getElementById("coinSymbol");
     const amountLabel        = document.getElementById("amountLabel");
@@ -650,6 +658,8 @@
       addTokenBtn.style.display = "inline-block";
       tokenFormElement.reset();
       quickCoinSelect.value = "";
+      cgIdRow.classList.add("hidden");
+      cgIdInput.value = "";
       amountLabel.textContent = "Amount of coin bought";
       formMode = "new";
       editingIndex = null;
@@ -696,18 +706,37 @@
 
     quickCoinSelect.addEventListener("change", (e) => {
       const value = e.target.value;
-      if (!value) return;
+      if (!value) {
+        cgIdRow.classList.add("hidden");
+        cgIdInput.value = "";
+        return;
+      }
+
+      if (value === "__custom__") {
+        // Custom memecoin: user fills name, symbol, and ID manually
+        coinNameInput.value = "";
+        coinSymbolInput.value = "";
+        updateAmountLabel();
+        cgIdRow.classList.remove("hidden");
+        return;
+      }
+
+      // Normal predefined coin
       const [id, sym, name] = value.split("|");
       coinNameInput.value = name;
       coinSymbolInput.value = sym;
       updateAmountLabel();
+      // Hide advanced ID row for standard coins
+      cgIdRow.classList.add("hidden");
+      cgIdInput.value = "";
     });
 
     coinSymbolInput.addEventListener("input", updateAmountLabel);
 
-    async function fetchCurrentPrice(symbol) {
+    async function fetchCurrentPrice(symbol, coingeckoId) {
+      const custom = coingeckoId && coingeckoId.trim();
       const upper = symbol.toUpperCase();
-      const id = COINGECKO_MAP[upper];
+      const id = custom || COINGECKO_MAP[upper];
       if (!id) return null;
 
       try {
@@ -831,6 +860,14 @@
         totalSpentInput.value = t.totalSpent;
         updateAmountLabel();
 
+        if (t.coingeckoId) {
+          cgIdInput.value = t.coingeckoId;
+          cgIdRow.classList.remove("hidden");
+        } else {
+          cgIdInput.value = "";
+          cgIdRow.classList.add("hidden");
+        }
+
         openTokenForm();
       } else if (action === "add") {
         const t = tokens[index];
@@ -847,10 +884,11 @@
     tokenFormElement.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const name       = coinNameInput.value.trim();
-      const symbol     = coinSymbolInput.value.trim().toUpperCase();
-      const amount     = parseFloat(coinAmountInput.value);
-      const totalSpent = parseFloat(totalSpentInput.value);
+      const name        = coinNameInput.value.trim();
+      const symbol      = coinSymbolInput.value.trim().toUpperCase();
+      const amount      = parseFloat(coinAmountInput.value);
+      const totalSpent  = parseFloat(totalSpentInput.value);
+      const coingeckoId = cgIdInput.value.trim();
 
       if (!name || !symbol || isNaN(amount) || isNaN(totalSpent) || amount <= 0) {
         alert("Please fill out all fields with valid values.");
@@ -859,7 +897,7 @@
 
       const buyPrice = totalSpent / amount;
 
-      let lastPrice = await fetchCurrentPrice(symbol);
+      let lastPrice = await fetchCurrentPrice(symbol, coingeckoId);
       if (formMode === "edit" && editingIndex !== null && (lastPrice === null)) {
         const existing = tokens[editingIndex];
         lastPrice = existing.lastPrice || buyPrice;
@@ -882,7 +920,8 @@
           lastPrice,
           cost,
           value,
-          pnl
+          pnl,
+          coingeckoId: coingeckoId || undefined
         };
       } else {
         tokens.push({
@@ -894,7 +933,8 @@
           lastPrice,
           cost,
           value,
-          pnl
+          pnl,
+          coingeckoId: coingeckoId || undefined
         });
       }
 
@@ -921,7 +961,7 @@
       t.totalSpent  = (t.totalSpent || 0) + extraUsd;
       t.buyPrice    = t.totalSpent / t.amount;
 
-      let lastPrice = await fetchCurrentPrice(t.symbol);
+      let lastPrice = await fetchCurrentPrice(t.symbol, t.coingeckoId);
       if (lastPrice === null) lastPrice = t.lastPrice || t.buyPrice;
 
       t.lastPrice = lastPrice;
@@ -949,7 +989,7 @@
       try {
         for (let i = 0; i < tokens.length; i++) {
           const t = tokens[i];
-          const p = await fetchCurrentPrice(t.symbol);
+          const p = await fetchCurrentPrice(t.symbol, t.coingeckoId);
           if (p !== null) {
             t.lastPrice = p;
             t.value     = p * t.amount;
@@ -963,7 +1003,7 @@
           renderTokens();
           lastUpdatedEl.textContent = `Last updated: ${formatTimestamp()} (${updatedCount} token${updatedCount > 1 ? "s" : ""})`;
         } else {
-          lastUpdatedEl.textContent = "No prices refreshed (only BTC, ETH, SOL, XRP, DOGE, ADA are supported right now).";
+          lastUpdatedEl.textContent = "No prices refreshed (set CoinGecko IDs for custom tokens, or use BTC, ETH, SOL, XRP, DOGE, ADA).";
         }
       } catch (err) {
         console.error("Refresh failed", err);
