@@ -485,7 +485,21 @@
 
       tokensEmpty.style.display = "none";
 
-      rawTokens.forEach((t, idx) => {
+      // sort: tokens with CoinGecko ID (chart-capable) first, others (incl. memecoin link-only) last
+      const tokensWithId    = [];
+      const tokensWithoutId = [];
+
+      for (const t of rawTokens) {
+        if (getCoinGeckoId(t)) {
+          tokensWithId.push(t);
+        } else {
+          tokensWithoutId.push(t);
+        }
+      }
+
+      const orderedTokens = tokensWithId.concat(tokensWithoutId);
+
+      orderedTokens.forEach((t, idx) => {
         const card = document.createElement("div");
         card.className = "token-chart-card";
 
@@ -654,7 +668,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-      buildUI();       // build cards + canvases + links once
+      buildUI();       // build cards + canvases + links once (charts-first, link-last)
       refreshCharts(); // first data pull
 
       if (REFRESH_MS && REFRESH_MS > 0) {
