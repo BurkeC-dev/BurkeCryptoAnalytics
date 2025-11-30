@@ -300,9 +300,9 @@
   <div class="app-shell">
     <header class="top-bar">
       <div class="hamburger" id="hamburger">
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
+        <div className="bar"></div>
+        <div className="bar"></div>
+        <div className="bar"></div>
       </div>
       <div class="logo-title">Burke Crypto Analytics</div>
     </header>
@@ -328,6 +328,18 @@
             $0.00
             <span class="stat-sub" id="totalPnlPercent">(0.00%)</span>
           </div>
+        </div>
+      </div>
+
+      <!-- PORTFOLIO VALUE (LAST 5 DAYS) LINE CHART -->
+      <div class="chart-section-title">Portfolio Value (Last 5 Days)</div>
+      <div class="chart-card">
+        <div class="chart-wrapper" id="valueWrapper">
+          <canvas id="valueChart"></canvas>
+        </div>
+        <div class="empty-state" id="valueEmpty" style="display:none;">
+          <strong>No history yet.</strong> As you open this Charts tab over the next few days,
+          we’ll start drawing the rise and fall of your total portfolio here.
         </div>
       </div>
 
@@ -376,9 +388,9 @@
       }
     });
 
-    // ====== CHART LOGIC ======
-    // Change this if your tracker uses a different key:
+    // ====== STORAGE KEYS ======
     const STORAGE_KEY = "bca_tokens_v1";
+    const HISTORY_KEY = "bca_portfolio_history_v1";
 
     function loadTokens() {
       try {
@@ -455,6 +467,61 @@
       return (value).toFixed(2) + "%";
     }
 
+    // ====== PORTFOLIO HISTORY (for line chart) ======
+    function loadHistory() {
+      try {
+        const raw = localStorage.getItem(HISTORY_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        console.error("Error reading history from localStorage", e);
+        return [];
+      }
+    }
+
+    function saveHistory(history) {
+      try {
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+      } catch (e) {
+        console.error("Error saving history", e);
+      }
+    }
+
+    // Record a point for "now", but only one per day (overwrite if same day)
+    function updateHistory(totalValue) {
+      const now = Date.now();
+      const history = loadHistory();
+
+      const last = history[history.length - 1];
+      if (last) {
+        const lastDay = new Date(last.t).toDateString();
+        const thisDay = new Date(now).toDateString();
+        if (lastDay === thisDay) {
+          last.v = totalValue;
+        } else {
+          history.push({ t: now, v: totalValue });
+        }
+      } else {
+        history.push({ t: now, v: totalValue });
+      }
+
+      // keep only last ~30 entries
+      if (history.length > 30) {
+        history.splice(0, history.length - 30);
+      }
+
+      saveHistory(history);
+      return history;
+    }
+
+    function filterLast5Days(history) {
+      const now = Date.now();
+      const cutoff = now - 5 * 24 * 60 * 60 * 1000;
+      return history.filter(p => p.t >= cutoff);
+    }
+
+    let valueChartInstance = null;
     let allocationChartInstance = null;
     let pnlChartInstance = null;
 
@@ -467,9 +534,11 @@
       const totalPnlValueEl = document.getElementById("totalPnlValue");
       const totalPnlPercentEl = document.getElementById("totalPnlPercent");
 
+      const valueEmptyEl = document.getElementById("valueEmpty");
       const allocationEmptyEl = document.getElementById("allocationEmpty");
       const pnlEmptyEl = document.getElementById("pnlEmpty");
 
+      const valueWrapper = document.getElementById("valueWrapper");
       const allocationWrapper = document.getElementById("allocationWrapper");
       const pnlWrapper = document.getElementById("pnlWrapper");
 
@@ -482,11 +551,16 @@
         totalPnlPercentEl.textContent = "(0.00%)";
         totalPnlValueEl.classList.remove("pill-profit", "pill-loss");
 
+        // Line chart empty
+        valueEmptyEl.style.display = "block";
+        valueWrapper.style.display = "none";
+
         allocationEmptyEl.style.display = "block";
         pnlEmptyEl.style.display = "block";
         allocationWrapper.style.display = "none";
         pnlWrapper.style.display = "none";
 
+        if (valueChartInstance) valueChartInstance.destroy();
         if (allocationChartInstance) allocationChartInstance.destroy();
         if (pnlChartInstance) pnlChartInstance.destroy();
         return;
@@ -517,6 +591,77 @@
         totalPnlValueEl.classList.add("pill-profit");
       } else if (totalPnl < 0) {
         totalPnlValueEl.classList.add("pill-loss");
+      }
+
+      // === Update history & render line chart ===
+      let history = updateHistory(totalValue);
+      history = filterLast5Days(history);
+
+      const minPointsForLine = 2;
+      if (!history.length || history.length < minPointsForLine) {
+        valueEmptyEl.style.display = "block";
+        valueWrapper.style.display = "none";
+        if (valueChartInstance) valueChartInstance.destroy();
+      } else {
+        valueEmptyEl.style.display = "none";
+        valueWrapper.style.display = "block";
+
+        const labels = history.map(p => {
+          const d = new Date(p.t);
+          return `${d.getMonth() + 1}/${d.getDate()}`;
+        });
+        const values = history.map(p => p.v);
+
+        const valueCtx = document.getElementById("valueChart").getContext("2d");
+        if (valueChartInstance) valueChartInstance.destroy();
+        valueChartInstance = new Chart(valueCtx, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [{
+              data: values,
+              fill: true,
+              tension: 0.35,
+              borderWidth: 2,
+              borderColor: "rgba(113,197,255,0.95)",
+              backgroundColor: "rgba(113,197,255,0.15)",
+              pointRadius: 3,
+              pointBackgroundColor: "#ffffff",
+              pointHoverRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) => formatCurrency(ctx.parsed.y)
+                }
+              }
+            },
+            scales: {
+              x: {
+                ticks: {
+                  color: "#cbd5ff",
+                  font: { size: 11 }
+                },
+                grid: { display: false }
+              },
+              y: {
+                ticks: {
+                  color: "#a9b0d6",
+                  callback: (value) => formatCurrency(value)
+                },
+                grid: {
+                  color: "rgba(148,163,255,0.2)",
+                  drawBorder: false
+                }
+              }
+            }
+          }
+        });
       }
 
       // === Portfolio Allocation (Doughnut) ===
