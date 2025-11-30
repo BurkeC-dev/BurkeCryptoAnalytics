@@ -296,7 +296,7 @@
     <main class="card">
       <h2 class="page-title underline-soft">Charts</h2>
       <p class="view-description">
-        Live history charts for each saved token, plus a combined portfolio line using your tracked amounts.
+        Live 5-day history charts for each tracked token, plus a combined portfolio line.
       </p>
       <p class="last-updated" id="lastUpdatedText"></p>
 
@@ -339,10 +339,9 @@
     });
 
     // ====== CONFIG ======
-    const STORAGE_KEY   = "bca_tokens_v1";
-    const DAYS_BACK     = 5;        // days of history
-    const REFRESH_MS    = 60000;    // how often to refetch in ms
-    const GECKO_NETWORK = "solana"; // your degen stuff is on Sol
+    const STORAGE_KEY = "bca_tokens_v1";
+    const DAYS_BACK   = 5;        // days of history
+    const REFRESH_MS  = 60000;    // how often to refetch in ms
 
     const COINGECKO_MAP = {
       BTC: "bitcoin",
@@ -378,8 +377,7 @@
         name: token.name || token.tokenName || token.symbol || "Unknown",
         symbol: (token.symbol || token.ticker || "").toUpperCase(),
         amount: Number(token.amount ?? 0),
-        coingeckoId: token.coingeckoId || "",
-        geckoTokenAddress: token.geckoTokenAddress || ""
+        coingeckoId: token.coingeckoId || ""   // advanced field from tracker (optional)
       };
     }
 
@@ -388,41 +386,6 @@
       if (custom) return custom;
       const mapped = COINGECKO_MAP[token.symbol];
       return mapped || null;
-    }
-
-    async function fetchGeckoTerminalHistoryForToken(token) {
-      const addr = (token.geckoTokenAddress || "").trim();
-      if (!addr) return null;
-
-      const url =
-        `https://api.geckoterminal.com/api/v2/networks/${encodeURIComponent(GECKO_NETWORK)}` +
-        `/tokens/${encodeURIComponent(addr)}/ohlcv/day?aggregate=1&currency=usd&limit=${DAYS_BACK}`;
-
-      try {
-        const res = await fetch(url);
-        if (!res.ok) {
-          console.error("GeckoTerminal ohlcv failed for", addr, res.status);
-          return null;
-        }
-        const json = await res.json();
-        // Expect: data: { attributes: { ohlcv_list: [[ts,o,h,l,c,v], ...] } }
-        const data = json.data;
-        if (!data || !data.attributes || !Array.isArray(data.attributes.ohlcv_list)) {
-          return null;
-        }
-
-        return data.attributes.ohlcv_list
-          .map(row => {
-            if (!Array.isArray(row) || row.length < 5) return null;
-            const tsSec = row[0];
-            const close = row[4];
-            return { time: tsSec * 1000, price: close };
-          })
-          .filter(Boolean);
-      } catch (err) {
-        console.error("Error fetching GeckoTerminal history for", addr, err);
-        return null;
-      }
     }
 
     async function fetchCoinGeckoHistoryForToken(token) {
@@ -449,15 +412,6 @@
         console.error("Error fetching CoinGecko history for", id, err);
         return null;
       }
-    }
-
-    async function fetchHistoryForToken(token) {
-      // 1) Try GeckoTerminal if we have a token address
-      const geckoHist = await fetchGeckoTerminalHistoryForToken(token);
-      if (geckoHist && geckoHist.length) return geckoHist;
-
-      // 2) Fall back to CoinGecko ID
-      return await fetchCoinGeckoHistoryForToken(token);
     }
 
     function formatCurrency(value) {
@@ -517,7 +471,7 @@
 
       const historyResults = await Promise.all(
         rawTokens.map(async (t) => {
-          const history = await fetchHistoryForToken(t);
+          const history = await fetchCoinGeckoHistoryForToken(t);
           return { token: t, history };
         })
       );
@@ -528,12 +482,14 @@
         portfolioEmpty.style.display   = "block";
         tokenChartsContainer.innerHTML = "";
         tokensEmpty.style.display      = "block";
-        lastUpdatedText.textContent    = "No historical data available (set CoinGecko IDs or Solana token addresses in the tracker).";
+        lastUpdatedText.textContent    =
+          "No historical data available. Check CoinGecko IDs in the tracker (e.g. BTC→bitcoin, SOL→solana, XRP→ripple).";
         return;
       }
 
       const now = Date.now();
-      lastUpdatedText.textContent = `Last updated: ${formatTimestamp(now)} • history from GeckoTerminal / CoinGecko`;
+      lastUpdatedText.textContent =
+        `Last updated: ${formatTimestamp(now)} • history from CoinGecko`;
 
       tokensEmpty.style.display = "none";
 
