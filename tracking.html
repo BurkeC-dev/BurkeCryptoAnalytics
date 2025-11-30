@@ -8,7 +8,7 @@
   <!-- FONTS -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+...00&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 
   <style>
     :root {
@@ -494,13 +494,7 @@
     </main>
   </div>
 
-  <!-- ADD / EDIT TOKEN OVERLAY -->
-  <!-- (keeping your existing form markup – unchanged) -->
-  <!-- ... your form HTML stays here ... -->
-
-  <!-- I’m not re-pasting the entire form/overlay HTML to keep this message under limits,
-       but the ONLY changes I made are in the <style> for .token-rowan
-       and in the <script> below: sorting + Rowan roasts. Use this JS as the updated part. -->
+  <!-- (your existing token form + add-more overlays go here; unchanged in logic) -->
 
   <script>
     /* MENU BEHAVIOR */
@@ -524,6 +518,34 @@
     const addTokenBtn        = document.getElementById("addTokenBtn");
     const refreshPricesBtn   = document.getElementById("refreshPricesBtn");
     const lastUpdatedEl      = document.getElementById("lastUpdated");
+
+    const tokenFormOverlay   = document.getElementById("tokenFormOverlay");
+    const tokenForm          = document.getElementById("tokenForm");
+    const tokenFormClose     = document.getElementById("tokenFormClose");
+    const tokenFormElement   = document.getElementById("tokenFormElement");
+    const tokenFormTitle     = document.getElementById("tokenFormTitle");
+    const tokenFormSubtitle  = document.getElementById("tokenFormSubtitle");
+
+    const addMoreOverlay       = document.getElementById("addMoreOverlay");
+    const addMoreFormEl        = document.getElementById("addMoreFormElement");
+    const addMoreClose         = document.getElementById("addMoreClose");
+    const addMoreAmountInput   = document.getElementById("addMoreAmount");
+    const addMoreUsdInput      = document.getElementById("addMoreUsd");
+    const addMoreTitle         = document.getElementById("addMoreTitle");
+    const addMoreSubtitle      = document.getElementById("addMoreSubtitle");
+    const addMoreAmountLabel   = document.getElementById("addMoreAmountLabel");
+
+    const quickCoinSelect    = document.getElementById("quickCoinSelect");
+    const advancedRow        = document.getElementById("advancedRow");
+    const cgIdInput          = document.getElementById("coingeckoId");
+    const geckoAddressInput  = document.getElementById("geckoTokenAddress");
+
+    const coinNameInput      = document.getElementById("coinName");
+    const coinSymbolInput    = document.getElementById("coinSymbol");
+    const amountLabel        = document.getElementById("amountLabel");
+    const coinAmountInput    = document.getElementById("coinAmount");
+    const totalSpentInput    = document.getElementById("totalSpent");
+
     const tokensList         = document.getElementById("tokensList");
     const emptyState         = document.getElementById("emptyState");
 
@@ -539,57 +561,7 @@
       ADA: "cardano"
     };
 
-    // Rowan per-token sayings
-    const ROWAN_UP = [
-      "finally, one of your bags is doing something.",
-      "don\u2019t let this go to your head.",
-      "even a blind trader catches a green candle sometimes.",
-      "okay profit prince/princess, calm down.",
-      "screenshot it before it disappears."
-    ];
-
-    const ROWAN_DOWN = [
-      "you bought what\u2026 at which price?",
-      "this token said \u2018down only\u2019 and you said \u2018sure.\u2019",
-      "hey, you\u2019re funding the winners\u2019 profits. generous.",
-      "did you buy the top? be honest.",
-      "I\u2019ve seen rugs with better recovery attempts."
-    ];
-
-    const ROWAN_FLAT = [
-      "this chart is giving \u2018nobody cares.\u2019",
-      "your coin is taking a personal day.",
-      "flat. like\u2026 pancake flat.",
-      "this thing moves less than your motivation.",
-      "market: \u2018I\u2019m not mad, I\u2019m just indifferent.\u2019"
-    ];
-
-    function pickRowan(list) {
-      if (!list || !list.length) return "";
-      const idx = Math.floor(Math.random() * list.length);
-      return list[idx];
-    }
-
-    let formMode     = "new";   // "new" | "edit"
-    let editingIndex = null;
-    let addMoreIndex = null;
-
-    function loadTokens() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        tokens = raw ? JSON.parse(raw) : [];
-      } catch (e) {
-        tokens = [];
-      }
-    }
-
-    function saveTokens() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(tokens));
-      } catch (e) {
-        console.error("Failed to save tokens", e);
-      }
-    }
+    // ... all your existing logic for loadTokens, saveTokens, forms, price fetching, etc. ...
 
     function renderTokens() {
       tokensList.innerHTML = "";
@@ -601,24 +573,64 @@
 
       emptyState.style.display = "none";
 
-      // Sort tokens by profit (highest first)
-      tokens.sort((a, b) => (b.pnl || 0) - (a.pnl || 0));
+      // Sort tokens by profit/loss (highest first) without changing the stored order
+      const indices = tokens.map((_, i) => i).sort((a, b) => {
+        const pnlA = typeof tokens[a].pnl === "number" ? tokens[a].pnl : 0;
+        const pnlB = typeof tokens[b].pnl === "number" ? tokens[b].pnl : 0;
+        return pnlB - pnlA;
+      });
 
-      tokens.forEach((t, index) => {
-      const tolerance = 0.01;
-      let roastText;
-      if (t.pnl > tolerance) {
-        roastText = pickRowan(ROWAN_UP);
-      } else if (t.pnl < -tolerance) {
-        roastText = pickRowan(ROWAN_DOWN);
-      } else {
-        roastText = pickRowan(ROWAN_FLAT);
+      // Rowan roast packs
+      const rowanUp = [
+        "finally, one of your bags is doing something.",
+        "don’t let this go to your head.",
+        "even a blind trader catches a green candle sometimes.",
+        "okay profit prince/princess, calm down.",
+        "screenshot it before it disappears."
+      ];
+
+      const rowanDown = [
+        "you bought what… at which price?",
+        "this token said ‘down only’ and you said ‘sure.’",
+        "hey, you’re funding the winners’ profits. generous.",
+        "did you buy the top? be honest.",
+        "I’ve seen rugs with better recovery attempts."
+      ];
+
+      const rowanFlat = [
+        "this chart is giving ‘nobody cares.’",
+        "your coin is taking a personal day.",
+        "flat. like… pancake flat.",
+        "this thing moves less than your motivation.",
+        "market: ‘I’m not mad, I’m just indifferent.’"
+      ];
+
+      function pick(list) {
+        if (!list.length) return "";
+        const idx = Math.floor(Math.random() * list.length);
+        return list[idx];
       }
 
-        const isProfit = t.pnl >= 0;
+      const tolerance = 0.01;
+
+      indices.forEach((index) => {
+        const t = tokens[index];
+        const isProfit = (typeof t.pnl === "number" ? t.pnl : 0) >= 0;
         const pnlClass = isProfit ? "token-pnl-positive" : "token-pnl-negative";
         const sign = isProfit ? "+" : "";
-        const pct = t.cost !== 0 ? (t.pnl / t.cost) * 100 : 0;
+        const cost = typeof t.cost === "number" ? t.cost : 0;
+        const pnl = typeof t.pnl === "number" ? t.pnl : 0;
+        const value = typeof t.value === "number" ? t.value : 0;
+        const pct = cost !== 0 ? (pnl / cost) * 100 : 0;
+
+        let roastText;
+        if (pnl > tolerance) {
+          roastText = pick(rowanUp);
+        } else if (pnl < -tolerance) {
+          roastText = pick(rowanDown);
+        } else {
+          roastText = pick(rowanFlat);
+        }
 
         const card = document.createElement("div");
         card.className = "token-card";
@@ -639,20 +651,20 @@
 
           <div class="token-row-line">
             <div class="token-row-label">Cost</div>
-            <div class="token-row-value">$${t.cost.toFixed(2)}</div>
+            <div class="token-row-value">$${cost.toFixed(2)}</div>
           </div>
 
           <div class="token-row-line">
             <div class="token-row-label">Value</div>
             <div class="token-row-value ${pnlClass}">
-              $${t.value.toFixed(2)}
+              $${value.toFixed(2)}
               <span class="token-pct ${pnlClass}">${sign}${pct.toFixed(2)}%</span>
             </div>
           </div>
 
           <div class="token-row-line">
-            <div class="token-row-label">${isProfit ? "Profit" : "Loss"}</div>
-            <div class="token-row-value ${pnlClass}">$${t.pnl.toFixed(2)}</div>
+            <div class="token-row-label">${pnl >= 0 ? "Profit" : "Loss"}</div>
+            <div class="token-row-value ${pnlClass}">$${pnl.toFixed(2)}</div>
           </div>
 
           <div class="token-rowan">${roastText}</div>
@@ -662,8 +674,10 @@
       });
     }
 
-    // (rest of your existing JS: price fetching, menus, form handling, etc.)
-    // Keep everything else exactly as it is below this point.
+    // at the very bottom of your script:
+    loadTokens();
+    renderTokens();
   </script>
+
 </body>
 </html>
