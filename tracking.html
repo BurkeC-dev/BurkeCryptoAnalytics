@@ -808,117 +808,124 @@
     }
 
     // RENDER TOKENS (sorted + Rowan roasts)
-    function renderTokens() {
-      tokensList.innerHTML = "";
+  function renderTokens() {
+  tokensList.innerHTML = "";
 
-      if (!tokens.length) {
-        emptyState.style.display = "block";
-        return;
-      }
+  if (!tokens.length) {
+    emptyState.style.display = "block";
+    return;
+  }
 
-      emptyState.style.display = "none";
+  emptyState.style.display = "none";
 
-      // Sort indices by P/L descending (highest profit first)
-      const indices = tokens.map((_, i) => i).sort((a, b) => {
-        const pnlA = typeof tokens[a].pnl === "number" ? tokens[a].pnl : 0;
-        const pnlB = typeof tokens[b].pnl === "number" ? tokens[b].pnl : 0;
-        return pnlB - pnlA;
-      });
+  // Sort indices by P/L descending (highest profit first)
+  const indices = tokens.map((_, i) => i).sort((a, b) => {
+    const pnlA = typeof tokens[a].pnl === "number" ? tokens[a].pnl : 0;
+    const pnlB = typeof tokens[b].pnl === "number" ? tokens[b].pnl : 0;
+    return pnlB - pnlA;
+  });
 
-      const rowanUp = [
-        "finally, one of your bags is doing something.",
-        "don\u2019t let this go to your head.",
-        "even a blind trader catches a green candle sometimes.",
-        "okay profit princess, calm down.",
-        "screenshot it before it disappears."
-      ];
+  const rowanUp = [
+    "finally, one of your bags is doing something.",
+    "don\u2019t let this go to your head.",
+    "even a blind trader catches a green candle sometimes.",
+    "okay profit princess, calm down.",
+    "screenshot it before it disappears."
+  ];
 
-      const rowanDown = [
-        "you bought what\u2026 at which price?",
-        "this token said \u2018down only\u2019 and you said \u2018sure.\u2019",
-        "hey, you\u2019re funding the winners\u2019 profits. generous.",
-        "did you buy the top? be honest.",
-        "I\u2019ve seen rugs with better recovery attempts."
-      ];
+  const rowanDown = [
+    "you bought what\u2026 at which price?",
+    "this token said \u2018down only\u2019 and you said \u2018sure.\u2019",
+    "hey, you\u2019re funding the winners\u2019 profits. generous.",
+    "did you buy the top? be honest.",
+    "I\u2019ve seen rugs with better recovery attempts."
+  ];
 
-      const rowanFlat = [
-        "this chart is giving \u2018nobody cares.\u2019",
-        "your coin is taking a personal day.",
-        "flat. like\u2026 pancake flat.",
-        "this thing moves less than your motivation.",
-        "market: \u2018I\u2019m not mad, I\u2019m just indifferent.\u2019"
-      ];
+  const rowanFlat = [
+    "this chart is giving \u2018nobody cares.\u2019",
+    "your coin is taking a personal day.",
+    "flat. like\u2026 pancake flat.",
+    "this thing moves less than your motivation.",
+    "market: \u2018I\u2019m not mad, I\u2019m just indifferent.\u2019"
+  ];
 
-      function pick(list) {
-        if (!list.length) return "";
-        const idx = Math.floor(Math.random() * list.length);
-        return list[idx];
-      }
+  function pick(list) {
+    if (!list.length) return "";
+    const idx = Math.floor(Math.random() * list.length);
+    return list[idx];
+  }
 
-      const tolerance = 0.01;
+  const tolerance = 0.01;
 
-      indices.forEach((index) => {
-        const t = tokens[index];
+  indices.forEach((index) => {
+    const t = tokens[index];
 
-        const cost  = typeof t.cost === "number" ? t.cost : 0;
-        const pnl   = typeof t.pnl === "number" ? t.pnl : 0;
-        const value = typeof t.value === "number" ? t.value : 0;
+    const cost  = typeof t.cost === "number" ? t.cost : 0;
+    const pnl   = typeof t.pnl === "number" ? t.pnl : 0;
+    const value = typeof t.value === "number" ? t.value : 0;
 
-        const isProfit = pnl >= 0;
-        const pnlClass = isProfit ? "token-pnl-positive" : "token-pnl-negative";
-        const sign     = isProfit ? "+" : "";
-        const pct      = cost !== 0 ? (pnl / cost) * 100 : 0;
+    const isProfit = pnl >= 0;
+    const pnlClass = isProfit ? "token-pnl-positive" : "token-pnl-negative";
+    const sign     = isProfit ? "+" : "";
+    const pct      = cost !== 0 ? (pnl / cost) * 100 : 0;
 
-        let roastText;
-        if (pnl > tolerance) {
-          roastText = pick(rowanUp);
-        } else if (pnl < -tolerance) {
-          roastText = pick(rowanDown);
-        } else {
-          roastText = pick(rowanFlat);
-        }
+    // 🔥 Rowan roast logic
+    let roastText;
+    const moreThanHalfLoss = cost > 0 && pnl < -0.5 * cost;
 
-        const card = document.createElement("div");
-        card.className = "token-card";
-        card.dataset.index = index;
-
-        card.innerHTML = `
-          <div class="token-card-header-row">
-            <div class="token-card-header">${t.name} (${t.symbol})</div>
-            <button class="token-menu-btn" type="button" aria-label="Token menu">⋮</button>
-            <div class="token-menu hidden">
-              <button class="token-menu-item" data-action="edit" type="button">Edit</button>
-              <button class="token-menu-item" data-action="add" type="button">Add</button>
-              <button class="token-menu-item token-menu-delete" data-action="delete" type="button">Delete</button>
-            </div>
-          </div>
-
-          <div class="token-card-amount">Amount: ${t.amount}</div>
-
-          <div class="token-row-line">
-            <div class="token-row-label">Cost</div>
-            <div class="token-row-value">$${cost.toFixed(2)}</div>
-          </div>
-
-          <div class="token-row-line">
-            <div class="token-row-label">Value</div>
-            <div class="token-row-value ${pnlClass}">
-              $${value.toFixed(2)}
-              <span class="token-pct ${pnlClass}">${sign}${pct.toFixed(2)}%</span>
-            </div>
-          </div>
-
-          <div class="token-row-line">
-            <div class="token-row-label">${pnl >= 0 ? "Profit" : "Loss"}</div>
-            <div class="token-row-value ${pnlClass}">$${pnl.toFixed(2)}</div>
-          </div>
-
-          <div class="token-rowan">${roastText}</div>
-        `;
-
-        tokensList.appendChild(card);
-      });
+    if (moreThanHalfLoss) {
+      // Special line for nuked bags
+      roastText = "WHAT THE ACTUAL FUCK DID YOU BUY!";
+    } else if (pnl > tolerance) {
+      roastText = pick(rowanUp);
+    } else if (pnl < -tolerance) {
+      roastText = pick(rowanDown);
+    } else {
+      roastText = pick(rowanFlat);
     }
+
+    const card = document.createElement("div");
+    card.className = "token-card";
+    card.dataset.index = index;
+
+    card.innerHTML = `
+      <div class="token-card-header-row">
+        <div class="token-card-header">${t.name} (${t.symbol})</div>
+        <button class="token-menu-btn" type="button" aria-label="Token menu">⋮</button>
+        <div class="token-menu hidden">
+          <button class="token-menu-item" data-action="edit" type="button">Edit</button>
+          <button class="token-menu-item" data-action="add" type="button">Add</button>
+          <button class="token-menu-item token-menu-delete" data-action="delete" type="button">Delete</button>
+        </div>
+      </div>
+
+      <div class="token-card-amount">Amount: ${t.amount}</div>
+
+      <div class="token-row-line">
+        <div class="token-row-label">Cost</div>
+        <div class="token-row-value">$${cost.toFixed(2)}</div>
+      </div>
+
+      <div class="token-row-line">
+        <div class="token-row-label">Value</div>
+        <div class="token-row-value ${pnlClass}">
+          $${value.toFixed(2)}
+          <span class="token-pct ${pnlClass}">${sign}${pct.toFixed(2)}%</span>
+        </div>
+      </div>
+
+      <div class="token-row-line">
+        <div class="token-row-label">${pnl >= 0 ? "Profit" : "Loss"}</div>
+        <div class="token-row-value ${pnlClass}">$${pnl.toFixed(2)}</div>
+      </div>
+
+      <div class="token-rowan">${roastText}</div>
+    `;
+
+    tokensList.appendChild(card);
+  });
+}
+
 
     // Handle clicks on token cards (menu + actions)
     tokensList.addEventListener("click", (e) => {
