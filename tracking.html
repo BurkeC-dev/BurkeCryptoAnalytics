@@ -849,10 +849,19 @@
     "market: \u2018I\u2019m not mad, I\u2019m just indifferent.\u2019"
   ];
 
-  function pick(list) {
-    if (!list.length) return "";
-    const idx = Math.floor(Math.random() * list.length);
-    return list[idx];
+  // 🔁 Pools so we don't reuse the same line in the same render
+  let upPool   = rowanUp.slice();
+  let downPool = rowanDown.slice();
+  let flatPool = rowanFlat.slice();
+
+  function pickUnique(pool, original) {
+    if (!pool.length) {
+      // reset when we’ve used everything once
+      pool.push(...original);
+    }
+    const idx = Math.floor(Math.random() * pool.length);
+    const [line] = pool.splice(idx, 1);
+    return line;
   }
 
   const tolerance = 0.01;
@@ -869,19 +878,18 @@
     const sign     = isProfit ? "+" : "";
     const pct      = cost !== 0 ? (pnl / cost) * 100 : 0;
 
-    // 🔥 Rowan roast logic
+    // 🔥 Rowan roast logic with >50% nuke
     let roastText;
     const moreThanHalfLoss = cost > 0 && pnl < -0.5 * cost;
 
     if (moreThanHalfLoss) {
-      // Special line for nuked bags
-      roastText = "WHAT THE ACTUAL FUCK DID YOU BUY!";
+      roastText = "WHAT THE ACTUAL FUCK DID YOU BUY!?!?!";
     } else if (pnl > tolerance) {
-      roastText = pick(rowanUp);
+      roastText = pickUnique(upPool, rowanUp);
     } else if (pnl < -tolerance) {
-      roastText = pick(rowanDown);
+      roastText = pickUnique(downPool, rowanDown);
     } else {
-      roastText = pick(rowanFlat);
+      roastText = pickUnique(flatPool, rowanFlat);
     }
 
     const card = document.createElement("div");
@@ -925,6 +933,7 @@
     tokensList.appendChild(card);
   });
 }
+
 
 
     // Handle clicks on token cards (menu + actions)
