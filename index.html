@@ -430,19 +430,19 @@
 
     const STORAGE_KEY = "bca_tokens_v1";
 
-    const totalPill        = document.getElementById("totalPill");
-    const totalValueDisplay= document.getElementById("totalValueDisplay");
-    const totalPnlDisplay  = document.getElementById("totalPnlDisplay");
+    const totalPill         = document.getElementById("totalPill");
+    const totalValueDisplay = document.getElementById("totalValueDisplay");
+    const totalPnlDisplay   = document.getElementById("totalPnlDisplay");
 
-    const statsGrid        = document.getElementById("statsGrid");
-    const statTotalValue   = document.getElementById("statTotalValue");
-    const statTotalCost    = document.getElementById("statTotalCost");
-    const statTotalPnl     = document.getElementById("statTotalPnl");
-    const statTokenCount   = document.getElementById("statTokenCount");
+    const statsGrid         = document.getElementById("statsGrid");
+    const statTotalValue    = document.getElementById("statTotalValue");
+    const statTotalCost     = document.getElementById("statTotalCost");
+    const statTotalPnl      = document.getElementById("statTotalPnl");
+    const statTokenCount    = document.getElementById("statTokenCount");
 
-    const emptyState       = document.getElementById("emptyState");
-    const tokensSection    = document.getElementById("tokensSection");
-    const tokensList       = document.getElementById("tokensList");
+    const emptyState        = document.getElementById("emptyState");
+    const tokensSection     = document.getElementById("tokensSection");
+    const tokensList        = document.getElementById("tokensList");
 
     function safeNumber(n) {
       if (typeof n === "number" && isFinite(n)) return n;
@@ -499,9 +499,9 @@
       totalPill.classList.remove("hidden");
       totalValueDisplay.textContent = "$" + formatMoney(totalValue);
 
-      const pnlSign   = totalPnl >= 0 ? "+" : "";
-      const pctSign   = totalPct >= 0 ? "+" : "";
-      const pnlClass  = totalPnl >= 0 ? "pnl-positive" : "pnl-negative";
+      const pnlSign  = totalPnl >= 0 ? "+" : "-";
+      const pctSign  = totalPct >= 0 ? "+" : "-";
+      const pnlClass = totalPnl >= 0 ? "pnl-positive" : "pnl-negative";
 
       totalPnlDisplay.innerHTML = `
         <span class="${pnlClass}">${pnlSign}$${formatMoney(Math.abs(totalPnl))}</span><br />
@@ -513,9 +513,8 @@
       statTotalValue.textContent = "$" + formatMoney(totalValue);
       statTotalCost.textContent  = "$" + formatMoney(totalCost);
 
-      const statPnlPrefix = totalPnl >= 0 ? "+" : "−";
-      statTotalPnl.textContent  =
-        (totalPnl >= 0 ? "+" : "") + "$" + formatMoney(Math.abs(totalPnl));
+      statTotalPnl.textContent =
+        (totalPnl >= 0 ? "+" : "-") + "$" + formatMoney(Math.abs(totalPnl));
       statTotalPnl.classList.remove("pnl-positive", "pnl-negative");
       statTotalPnl.classList.add(pnlClass);
 
@@ -530,10 +529,10 @@
         const value = safeNumber(t.value ?? 0);
         const pnl   = value - cost;
         const pct   = cost !== 0 ? (pnl / cost) * 100 : 0;
-        const isProfit = pnl >= 0;
-        const pnlSign  = isProfit ? "+" : "";
-        const pctSign  = pct >= 0 ? "+" : "";
-        const pnlClass = isProfit ? "pnl-positive" : "pnl-negative";
+
+        const pnlSignToken = pnl >= 0 ? "+" : "-";
+        const pctSignToken = pct >= 0 ? "+" : "-";
+        const pnlClassToken = pnl >= 0 ? "pnl-positive" : "pnl-negative";
 
         const card = document.createElement("div");
         card.className = "mini-token-card";
@@ -541,10 +540,10 @@
         card.innerHTML = `
           <div class="mini-header-row">
             <div class="mini-name">${t.name} (${t.symbol})</div>
-            <div class="mini-value ${pnlClass}">
-              ${pnlSign}$${formatMoney(Math.abs(pnl))}
-              <span class="mini-pct ${pnlClass}">
-                ${pctSign}${Math.abs(pct).toFixed(2)}%
+            <div class="mini-value ${pnlClassToken}">
+              ${pnlSignToken}$${formatMoney(Math.abs(pnl))}
+              <span class="mini-pct ${pnlClassToken}">
+                ${pctSignToken}${Math.abs(pct).toFixed(2)}%
               </span>
             </div>
           </div>
