@@ -808,7 +808,7 @@
     }
 
     // RENDER TOKENS (sorted + Rowan roasts)
-  function renderTokens() {
+ function renderTokens() {
   tokensList.innerHTML = "";
 
   if (!tokens.length) {
@@ -825,38 +825,93 @@
     return pnlB - pnlA;
   });
 
+  // ---------- Normal Rowan lines (mild profanity) ----------
+
   const rowanUp = [
-    "finally, one of your bags is doing something.",
-    "don\u2019t let this go to your head.",
-    "even a blind trader catches a green candle sometimes.",
-    "okay profit princess, calm down.",
-    "screenshot it before it disappears."
+    "Look at you, finally making some goddamn money.",
+    "Well shit, something actually pumped? Congrats, princess.",
+    "Okay profit princess, chill the hell out.",
+    "Take the win before the market fucks you again.",
+    "Nice. Try not to blow it on dumb shit."
   ];
 
   const rowanDown = [
-    "you bought what\u2026 at which price?",
-    "this token said \u2018down only\u2019 and you said \u2018sure.\u2019",
-    "hey, you\u2019re funding the winners\u2019 profits. generous.",
-    "did you buy the top? be honest.",
-    "I\u2019ve seen rugs with better recovery attempts."
+    "Relax, dipshit — it’s red, not the end of the world.",
+    "It dipped? Yeah, no shit. Your mood probably did too.",
+    "Hold steady — it only counts if you sell, dumbass.",
+    "God damnit… stop checking the chart every 4 seconds.",
+    "You’re getting fucked, but like, gently."
   ];
 
   const rowanFlat = [
-    "this chart is giving \u2018nobody cares.\u2019",
-    "your coin is taking a personal day.",
-    "flat. like\u2026 pancake flat.",
-    "this thing moves less than your motivation.",
-    "market: \u2018I\u2019m not mad, I\u2019m just indifferent.\u2019"
+    "Nothing’s happening. Your bag’s taking a goddamn nap.",
+    "Sideways. Riveting. Truly fucking thrilling.",
+    "Your coin is vibing… but like, in a lazy-ass way.",
+    "Market said ‘nah.’ Not even a ‘fuck you,’ just… nothing.",
+    "This chart is doing jack shit. Like, aggressively nothing."
   ];
 
-  // 🔁 Pools so we don't reuse the same line in the same render
-  let upPool   = rowanUp.slice();
-  let downPool = rowanDown.slice();
-  let flatPool = rowanFlat.slice();
+  // ---------- Nuclear loss tiers (heavy profanity) ----------
+
+  // Tier 1 — –50% to –69%
+  const tier1Lines = [
+    "WHAT THE ACTUAL FUCK DID YOU BUY!?!?!",
+    "Son of a bitch… you really held through all that red?",
+    "God DAMNIT, this bag is cooked harder than Waffle House hashbrowns.",
+    "This thing didn’t dip — it bent you over and fucked your wallet sideways.",
+    "Jesus Christ, did you buy this coin during a fever dream?"
+  ];
+
+  // Tier 2 — –70% to –89%
+  const tier2Lines = [
+    "HOLY FUCKING SHIT. THIS BAG IS A BIOHAZARD. GET IT AWAY FROM ME.",
+    "Son of a BITCH, this coin nosedived like it was TRYING to die.",
+    "This chart didn’t go down — it fucking swan-dove off a cliff.",
+    "Motherfucker… you bought a token that got ASS-BLASTED through the floor.",
+    "God DAMN. Even Satan wouldn’t trade this shit."
+  ];
+
+  // Tier 3 — –90% to –96%
+  const tier3Lines = [
+    "Jesus FUCKING Christ… this isn’t a bag, this is a WAR CRIME.",
+    "OH COME ON. Who convinced you to buy THIS flaming dogshit?",
+    "God damnit… down 90%? This coin fucking hates you personally.",
+    "Holy hell, this is bad. Like piss-into-a-power-outlet bad.",
+    "This thing is more fucked than a raccoon that ran into freeway traffic."
+  ];
+
+  // Tier 4 — –97% to –99%
+  const tier4Lines = [
+    "WHAT THE FUCK DID YOU BUY — AND WHY DID YOU BUY ALL OF IT?!?!",
+    "Son of a BITCH, this chart is a straight-up obituary.",
+    "God DAMN… this token is deader than my hopes and dreams.",
+    "This isn’t a loss — this is a fucking EXORCISM.",
+    "Bro… this coin got fucked so hard it’s paying child support."
+  ];
+
+  // Tier 5 — –99% to –100% (or basically zero)
+  const tier5Lines = [
+    "OH MY SWEET FUCKING GOD. THIS COIN RUGGED ITSELF TO HELL.",
+    "HOLY MOTHER OF SON OF A BITCH… there’s NOTHING LEFT.",
+    "God DAMNIT. This coin didn’t die — it fucking evaporated.",
+    "Down 99%? This is a CRIME SCENE, not a portfolio.",
+    "Motherfucker… I’d call this a loss, but that implies something SURVIVED."
+  ];
+
+  // ---------- Pools so we don't reuse the same line in one render ----------
+
+  let upPool    = rowanUp.slice();
+  let downPool  = rowanDown.slice();
+  let flatPool  = rowanFlat.slice();
+
+  let t1Pool    = tier1Lines.slice();
+  let t2Pool    = tier2Lines.slice();
+  let t3Pool    = tier3Lines.slice();
+  let t4Pool    = tier4Lines.slice();
+  let t5Pool    = tier5Lines.slice();
 
   function pickUnique(pool, original) {
     if (!pool.length) {
-      // reset when we’ve used everything once
       pool.push(...original);
     }
     const idx = Math.floor(Math.random() * pool.length);
@@ -878,17 +933,38 @@
     const sign     = isProfit ? "+" : "";
     const pct      = cost !== 0 ? (pnl / cost) * 100 : 0;
 
-    // 🔥 Rowan roast logic with >50% nuke
-    let roastText;
-    const moreThanHalfLoss = cost > 0 && pnl < -0.5 * cost;
+    // Calculate loss % (positive number when losing)
+    let lossPercent = 0;
+    if (cost > 0 && pnl < 0) {
+      lossPercent = (-pnl / cost) * 100;
+    }
 
-    if (moreThanHalfLoss) {
-      roastText = "WHAT THE ACTUAL FUCK DID YOU BUY!?!?!";
+    // ---------- Choose Rowan line with tier override ----------
+    let roastText;
+
+    if (lossPercent >= 99 || (value < 0.01 && pnl < 0)) {
+      // Tier 5: -99% to -100% or basically zero value
+      roastText = pickUnique(t5Pool, tier5Lines);
+    } else if (lossPercent >= 97) {
+      // Tier 4
+      roastText = pickUnique(t4Pool, tier4Lines);
+    } else if (lossPercent >= 90) {
+      // Tier 3
+      roastText = pickUnique(t3Pool, tier3Lines);
+    } else if (lossPercent >= 70) {
+      // Tier 2
+      roastText = pickUnique(t2Pool, tier2Lines);
+    } else if (lossPercent >= 50) {
+      // Tier 1
+      roastText = pickUnique(t1Pool, tier1Lines);
     } else if (pnl > tolerance) {
+      // Normal up
       roastText = pickUnique(upPool, rowanUp);
     } else if (pnl < -tolerance) {
+      // Normal down
       roastText = pickUnique(downPool, rowanDown);
     } else {
+      // Flat
       roastText = pickUnique(flatPool, rowanFlat);
     }
 
