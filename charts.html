@@ -10,6 +10,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 
+  <!-- Chart.js for line charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     :root {
       --lavender: #dcd0ff;
@@ -18,7 +21,6 @@
       --text-muted: #a9b0d6;
       --card-bg: rgba(12,14,35,0.95);
       --border-soft: rgba(140,155,255,0.3);
-      --pill-bg: linear-gradient(135deg, #bfa8ff, #71c5ff);
     }
 
     .soft-glow {
@@ -205,9 +207,9 @@
       margin: 1.1rem 0 0.4rem;
     }
 
-    .token-link-card {
+    .token-chart-card {
       margin-top: 0.75rem;
-      padding: 0.9rem 0.9rem 0.8rem;
+      padding: 0.9rem 0.85rem 0.8rem;
       background: rgba(6,8,26,0.95);
       border-radius: 18px;
       border: 1px solid rgba(104,122,255,0.4);
@@ -232,44 +234,17 @@
       text-align: right;
     }
 
-    .token-meta {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      margin-bottom: 0.5rem;
+    .chart-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 100%;
+      height: 210px;
+      margin-top: 0.4rem;
     }
 
-    .link-pill {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0.45rem 1.1rem;
-      border-radius: 999px;
-      background: var(--pill-bg);
-      color: #06061a;
-      font-size: 0.8rem;
-      font-weight: 600;
-      text-decoration: none;
-      border: none;
-      cursor: pointer;
-      box-shadow:
-        0 0 3px var(--blue),
-        0 0 7px rgba(113,197,255,0.8);
-      transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.12s ease;
-      margin-right: 0.4rem;
-    }
-
-    .link-pill:active {
-      transform: scale(0.97);
-      box-shadow:
-        0 0 2px var(--blue),
-        0 0 4px rgba(113,197,255,0.6);
-    }
-
-    .link-pill.secondary {
-      background: transparent;
-      color: var(--lavender);
-      border: 1px solid rgba(140,155,255,0.7);
-      box-shadow: none;
+    .chart-wrapper canvas {
+      width: 100% !important;
+      height: 100% !important;
     }
 
     .empty-state {
@@ -322,15 +297,14 @@
     <main class="card">
       <h2 class="page-title underline-soft">Charts</h2>
       <p class="view-description">
-        Quick links out to full-screen live charts for each tracked token.
+        Simple 5-day price lines for tokens that have a CoinGecko ID set in the Tracker.
       </p>
       <p class="last-updated" id="lastUpdatedText"></p>
 
-      <div class="chart-section-title">Token chart links</div>
-      <div id="tokenLinksContainer"></div>
+      <div class="chart-section-title">Token charts</div>
+      <div id="tokenChartsContainer"></div>
       <div class="empty-state" id="tokensEmpty" style="display:none;">
-        <strong>No tokens yet.</strong> Add tokens in the <em>Tracker</em> tab first.  
-        In the advanced section, set a <em>GeckoTerminal token address</em> to enable chart links.
+        <strong>No tokens to chart.</strong> Add tokens in the <em>Tracker</em> tab first.
       </div>
     </main>
   </div>
@@ -354,13 +328,26 @@
     });
 
     // ====== CONFIG ======
-    const STORAGE_KEY   = "bca_tokens_v1";
-    const GECKO_NETWORK = "solana";
+    const STORAGE_KEY = "bca_tokens_v1";
+    const DAYS_BACK   = 5;
+    const REFRESH_MS  = 60000; // how often to refresh while page is open
 
-    const lastUpdatedText     = document.getElementById("lastUpdatedText");
-    const tokenLinksContainer = document.getElementById("tokenLinksContainer");
-    const tokensEmpty         = document.getElementById("tokensEmpty");
+    const COINGECKO_MAP = {
+      BTC: "bitcoin",
+      ETH: "ethereum",
+      SOL: "solana",
+      XRP: "ripple",
+      DOGE: "dogecoin",
+      ADA: "cardano"
+    };
 
+    const lastUpdatedText      = document.getElementById("lastUpdatedText");
+    const tokenChartsContainer = document.getElementById("tokenChartsContainer");
+    const tokensEmpty          = document.getElementById("tokensEmpty");
+
+    let tokenChartInstances = [];
+
+    // ====== HELPERS ======
     function loadTokens() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -376,8 +363,50 @@
         name: token.name || token.tokenName || token.symbol || "Unknown",
         symbol: (token.symbol || token.ticker || "").toUpperCase(),
         amount: Number(token.amount ?? 0),
-        geckoTokenAddress: token.geckoTokenAddress || ""
+        coingeckoId: token.coingeckoId || ""
       };
+    }
+
+    function getCoinGeckoId(token) {
+      const custom = token.coingeckoId && token.coingeckoId.trim();
+      if (custom) return custom;
+      const mapped = COINGECKO_MAP[token.symbol];
+      return mapped || null;
+    }
+
+    async function fetchCoinGeckoHistoryForToken(token) {
+      const id = getCoinGeckoId(token);
+      if (!id) return null;
+
+      const url =
+        "https://api.coingecko.com/api/v3/coins/" +
+        encodeURIComponent(id) +
+        "/market_chart?vs_currency=usd&days=" +
+        encodeURIComponent(DAYS_BACK) +
+        "&precision=full";
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) {
+          console.error("CoinGecko market_chart failed for", id, res.status);
+          return null;
+        }
+        const data = await res.json();
+        const prices = data.prices || [];
+        return prices.map(p => ({ time: p[0], price: p[1] }));
+      } catch (err) {
+        console.error("Error fetching CoinGecko history for", id, err);
+        return null;
+      }
+    }
+
+    function formatCurrency(value) {
+      if (isNaN(value)) value = 0;
+      return value.toLocaleString(undefined, {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 6
+      });
     }
 
     function formatTimestamp(ts) {
@@ -391,17 +420,28 @@
       return `${month}/${day} ${hr12}:${minutes} ${ampm}`;
     }
 
-    function buildGeckoTerminalUrl(address) {
-      const trimmed = address.trim();
-      if (!trimmed) return null;
-      const base = "https://www.geckoterminal.com";
-      return `${base}/${encodeURIComponent(GECKO_NETWORK)}/tokens/${encodeURIComponent(trimmed)}`;
+    function buildShortTime(ts) {
+      const d = new Date(ts);
+      const month = d.getMonth() + 1;
+      const day   = d.getDate();
+      const hours = d.getHours().toString().padStart(2, "0");
+      const mins  = d.getMinutes().toString().padStart(2, "0");
+      return `${month}/${day} ${hours}:${mins}`;
     }
 
-    function renderLinks() {
-      const rawTokens = loadTokens().map(normalizeToken);
+    function destroyTokenCharts() {
+      tokenChartInstances.forEach(ch => ch.destroy());
+      tokenChartInstances = [];
+    }
 
-      tokenLinksContainer.innerHTML = "";
+    // ====== MAIN: FETCH + RENDER ======
+    async function updateAndRender() {
+      const rawTokens = loadTokens()
+        .map(normalizeToken)
+        .filter(t => t.amount > 0);
+
+      destroyTokenCharts();
+      tokenChartsContainer.innerHTML = "";
 
       if (!rawTokens.length) {
         tokensEmpty.style.display = "block";
@@ -409,11 +449,22 @@
         return;
       }
 
-      let anyShown = false;
+      // Fetch CoinGecko history for all tokens in parallel
+      const historyResults = await Promise.all(
+        rawTokens.map(async (t) => {
+          const history = await fetchCoinGeckoHistoryForToken(t);
+          return { token: t, history };
+        })
+      );
 
-      rawTokens.forEach((t) => {
+      let anyCharts = false;
+
+      historyResults.forEach((entry, idx) => {
+        const t = entry.token;
+        const history = entry.history;
+
         const card = document.createElement("div");
-        card.className = "token-link-card";
+        card.className = "token-chart-card";
 
         const header = document.createElement("div");
         header.className = "token-header";
@@ -430,57 +481,99 @@
         header.appendChild(sub);
         card.appendChild(header);
 
-        const meta = document.createElement("div");
-        meta.className = "token-meta";
-        meta.textContent = t.name !== t.symbol ? t.name : "";
-        card.appendChild(meta);
+        if (history && history.length > 1) {
+          const wrapper = document.createElement("div");
+          wrapper.className = "chart-wrapper";
+          const canvas = document.createElement("canvas");
+          canvas.id = `tokenChart_${idx}`;
+          wrapper.appendChild(canvas);
+          card.appendChild(wrapper);
 
-        const addr = (t.geckoTokenAddress || "").trim();
-        if (addr) {
-          const url = buildGeckoTerminalUrl(addr);
-          if (url) {
-            const link = document.createElement("a");
-            link.className = "link-pill";
-            link.href = url;
-            link.target = "_blank";
-            link.rel = "noopener noreferrer";
-            link.textContent = "Open live chart";
+          const ctx = canvas.getContext("2d");
+          const labels = history.map(p => buildShortTime(p.time));
+          const prices = history.map(p => p.price);
 
-            card.appendChild(link);
+          const chart = new Chart(ctx, {
+            type: "line",
+            data: {
+              labels,
+              datasets: [{
+                data: prices,
+                fill: true,
+                tension: 0.35,
+                borderWidth: 1.8,
+                borderColor: "rgba(113,197,255,0.96)",
+                backgroundColor: "rgba(113,197,255,0.10)",
+                pointRadius: 0,
+                pointHitRadius: 6
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: {
+                    label: (ctx) => formatCurrency(ctx.parsed.y)
+                  }
+                }
+              },
+              scales: {
+                x: {
+                  ticks: {
+                    color: "#cbd5ff",
+                    font: { size: 9 }
+                  },
+                  grid: { display: false }
+                },
+                y: {
+                  ticks: {
+                    color: "#a9b0d6",
+                    callback: (value) => formatCurrency(value)
+                  },
+                  grid: {
+                    color: "rgba(148,163,255,0.18)",
+                    drawBorder: false
+                  }
+                }
+              }
+            }
+          });
 
-            const hint = document.createElement("div");
-            hint.className = "hint";
-            hint.textContent = "Opens GeckoTerminal in a new tab with full chart controls.";
-            card.appendChild(hint);
-
-            anyShown = true;
-          } else {
-            const hint = document.createElement("div");
-            hint.className = "hint";
-            hint.textContent =
-              "Could not build GeckoTerminal URL from this token address.";
-            card.appendChild(hint);
-          }
+          tokenChartInstances.push(chart);
+          anyCharts = true;
         } else {
           const hint = document.createElement("div");
           hint.className = "hint";
-          hint.textContent =
-            "No GeckoTerminal token address set. Edit this token in the Tracker and paste the Solana token address to enable the chart link.";
+
+          const id = getCoinGeckoId(t);
+          if (!id) {
+            hint.textContent =
+              "No CoinGecko ID configured for this token. Edit it in the Tracker and fill in the CoinGecko ID (or use a mapped symbol like BTC, ETH, SOL, XRP, DOGE, ADA).";
+          } else {
+            hint.textContent =
+              "Could not load history from CoinGecko right now. Try again in a moment.";
+          }
+
           card.appendChild(hint);
         }
 
-        tokenLinksContainer.appendChild(card);
+        tokenChartsContainer.appendChild(card);
       });
 
-      tokensEmpty.style.display = anyShown ? "none" : "block";
+      tokensEmpty.style.display = anyCharts ? "none" : "block";
 
       const now = Date.now();
       lastUpdatedText.textContent =
-        `Links generated from saved tokens • ${formatTimestamp(now)}`;
+        `Live from CoinGecko • last refreshed: ${formatTimestamp(now)}`;
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-      renderLinks();
+      updateAndRender();
+      if (REFRESH_MS && REFRESH_MS > 0) {
+        setInterval(updateAndRender, REFRESH_MS);
+      }
     });
   </script>
 
