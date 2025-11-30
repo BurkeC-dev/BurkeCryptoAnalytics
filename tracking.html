@@ -661,6 +661,15 @@
       }
     }
 
+    // Helper to compute PnL if needed
+    function computePnl(token) {
+      const cost = typeof token.cost === "number"
+        ? token.cost
+        : (typeof token.totalSpent === "number" ? token.totalSpent : 0);
+      const value = typeof token.value === "number" ? token.value : 0;
+      return value - cost;
+    }
+
     // Helpers to open/close overlays
     function openTokenForm() {
       tokenFormOverlay.classList.remove("hidden");
@@ -823,11 +832,24 @@
 
       emptyState.style.display = "none";
 
+      // Sort tokens by highest profit → biggest loss
+      tokens.sort((a, b) => {
+        const pnlA = typeof a.pnl === "number" ? a.pnl : computePnl(a);
+        const pnlB = typeof b.pnl === "number" ? b.pnl : computePnl(b);
+        return pnlB - pnlA;
+      });
+
       tokens.forEach((t, index) => {
-        const isProfit = t.pnl >= 0;
+        const cost  = typeof t.cost === "number"
+          ? t.cost
+          : (typeof t.totalSpent === "number" ? t.totalSpent : 0);
+        const value = typeof t.value === "number" ? t.value : 0;
+        const pnl   = typeof t.pnl === "number" ? t.pnl : (value - cost);
+
+        const isProfit = pnl >= 0;
         const pnlClass = isProfit ? "token-pnl-positive" : "token-pnl-negative";
         const sign = isProfit ? "+" : "";
-        const pct = t.cost !== 0 ? (t.pnl / t.cost) * 100 : 0;
+        const pct = cost !== 0 ? (pnl / cost) * 100 : 0;
 
         const card = document.createElement("div");
         card.className = "token-card";
@@ -848,20 +870,20 @@
 
           <div class="token-row-line">
             <div class="token-row-label">Cost</div>
-            <div class="token-row-value">$${t.cost.toFixed(2)}</div>
+            <div class="token-row-value">$${cost.toFixed(2)}</div>
           </div>
 
           <div class="token-row-line">
             <div class="token-row-label">Value</div>
             <div class="token-row-value ${pnlClass}">
-              $${t.value.toFixed(2)}
+              $${value.toFixed(2)}
               <span class="token-pct ${pnlClass}">${sign}${pct.toFixed(2)}%</span>
             </div>
           </div>
 
           <div class="token-row-line">
             <div class="token-row-label">${isProfit ? "Profit" : "Loss"}</div>
-            <div class="token-row-value ${pnlClass}">$${t.pnl.toFixed(2)}</div>
+            <div class="token-row-value ${pnlClass}">$${pnl.toFixed(2)}</div>
           </div>
         `;
 
@@ -1047,6 +1069,9 @@
           if (p !== null) {
             t.lastPrice = p;
             t.value     = p * t.amount;
+            t.cost      = typeof t.cost === "number"
+              ? t.cost
+              : (typeof t.totalSpent === "number" ? t.totalSpent : 0);
             t.pnl       = t.value - t.cost;
             updatedCount++;
           }
