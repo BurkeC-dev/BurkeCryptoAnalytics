@@ -396,6 +396,7 @@
       border: 1px solid currentColor;
     }
 
+    
     .token-rowan {
       margin-top: 0.45rem;
       font-size: 0.7rem;
@@ -403,7 +404,7 @@
       font-style: italic;
     }
 
-    #emptyState {
+#emptyState {
       margin-top: 0.8rem;
       font-size: 0.78rem;
       color: var(--text-muted);
@@ -494,9 +495,101 @@
     </main>
   </div>
 
-  <!-- Your existing overlays (same IDs) should still be here in your project:
-       tokenFormOverlay, tokenFormElement, addMoreOverlay, etc.
-       I'm not rewriting those, just wiring the JS below to them. -->
+  <!-- ADD / EDIT TOKEN OVERLAY -->
+  <div class="overlay hidden" id="tokenFormOverlay">
+    <div class="token-form" id="tokenForm">
+      <div class="token-form-header">
+        <div>
+          <div class="token-form-title" id="tokenFormTitle">New token entry</div>
+          <div class="token-form-subtext" id="tokenFormSubtitle">
+            Choose a coin, log your entry, we’ll track the rest.
+          </div>
+        </div>
+        <button class="token-form-close" id="tokenFormClose">×</button>
+      </div>
+
+      <form id="tokenFormElement">
+        <div class="form-row">
+          <label class="form-label" for="quickCoinSelect">Quick coin select</label>
+          <select id="quickCoinSelect" class="token-select">
+            <option value="">Choose a popular coin…</option>
+            <option value="bitcoin|BTC|Bitcoin">Bitcoin (BTC)</option>
+            <option value="ethereum|ETH|Ethereum">Ethereum (ETH)</option>
+            <option value="solana|SOL|Solana">Solana (SOL)</option>
+            <option value="ripple|XRP|XRP">XRP (XRP)</option>
+            <option value="dogecoin|DOGE|Dogecoin">Dogecoin (DOGE)</option>
+            <option value="cardano|ADA|Cardano">Cardano (ADA)</option>
+            <option value="__custom__">Other / custom token…</option>
+          </select>
+        </div>
+
+        <div class="form-row hidden" id="advancedRow">
+          <label class="form-label" for="coingeckoId">Advanced price source (optional)</label>
+          <input id="coingeckoId" class="token-input" type="text" placeholder="CoinGecko ID (e.g. dogwifcoin)" />
+          <div style="height:0.4rem;"></div>
+          <input id="geckoTokenAddress" class="token-input" type="text" placeholder="GeckoTerminal token address (Solana)" />
+          <div class="form-help">
+            Paste the token address used on Solana DEXes, e.g. 4LPb8xzg4a5Uxq8GnJmP6k4MeZi5g9DAJim8c58TpHAS.
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label" for="coinName">Name of coin</label>
+          <input id="coinName" class="token-input" type="text" placeholder="e.g. Bitcoin" required />
+        </div>
+
+        <div class="form-row">
+          <label class="form-label" for="coinSymbol">Symbol / ticker</label>
+          <input id="coinSymbol" class="token-input" type="text" placeholder="e.g. BTC" required />
+        </div>
+
+        <div class="form-row">
+          <label class="form-label" id="amountLabel" for="coinAmount">Amount of coin bought</label>
+          <input id="coinAmount" class="token-input" type="number" step="any" min="0" placeholder="e.g. 0.5" required />
+        </div>
+
+        <div class="form-row">
+          <label class="form-label" for="totalSpent">Total paid (USD)</label>
+          <input id="totalSpent" class="token-input" type="number" step="0.01" min="0" placeholder="e.g. 100" required />
+        </div>
+
+        <button type="submit" class="primary-pill" style="width:100%;margin-top:0.6rem;">
+          Save token
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADD MORE OVERLAY -->
+  <div class="overlay hidden" id="addMoreOverlay">
+    <div class="token-form" id="addMoreForm">
+      <div class="token-form-header">
+        <div>
+          <div class="token-form-title" id="addMoreTitle">Add more</div>
+          <div class="token-form-subtext" id="addMoreSubtitle">
+            Log an additional buy for this position.
+          </div>
+        </div>
+        <button class="token-form-close" id="addMoreClose">×</button>
+      </div>
+
+      <form id="addMoreFormElement">
+        <div class="form-row">
+          <label class="form-label" id="addMoreAmountLabel" for="addMoreAmount">Additional amount bought</label>
+          <input id="addMoreAmount" class="token-input" type="number" step="any" min="0" placeholder="e.g. 0.1" required />
+        </div>
+
+        <div class="form-row">
+          <label class="form-label" for="addMoreUsd">Additional spent (USD)</label>
+          <input id="addMoreUsd" class="token-input" type="number" step="0.01" min="0" placeholder="e.g. 25" required />
+        </div>
+
+        <button type="submit" class="primary-pill" style="width:100%;margin-top:0.6rem;">
+          Add to position
+        </button>
+      </form>
+    </div>
+  </div>
 
   <script>
     /* MENU BEHAVIOR */
@@ -614,8 +707,8 @@
       formMode = "new";
       editingIndex = null;
       tokenFormTitle.textContent = "New token entry";
-      tokenFormSubtitle.textContent = "Add a fresh position to track.";
-      amountLabel.textContent = "Amount owned";
+      tokenFormSubtitle.textContent = "Choose a coin, log your entry, we’ll track the rest.";
+      amountLabel.textContent = "Amount of coin bought";
       openTokenForm();
     });
 
@@ -632,11 +725,19 @@
         advancedRow.classList.add("hidden");
         return;
       }
-      const label = quickCoinSelect.options[quickCoinSelect.selectedIndex].text;
-      coinNameInput.value   = label;
-      coinSymbolInput.value = val;
+      if (val === "__custom__") {
+        coinNameInput.value   = "";
+        coinSymbolInput.value = "";
+        cgIdInput.value       = "";
+        advancedRow.classList.remove("hidden");
+        return;
+      }
 
-      const mapped = COINGECKO_MAP[val];
+      const [cgId, sym, name] = val.split("|");
+      coinNameInput.value   = name;
+      coinSymbolInput.value = sym;
+
+      const mapped = cgId || COINGECKO_MAP[sym];
       if (mapped) {
         cgIdInput.value = mapped;
         advancedRow.classList.add("hidden");
@@ -663,7 +764,50 @@
       }
     });
 
-    // Render tokens (sorted + Rowan roasts)
+    // PRICE FETCHING (same behavior as before)
+    async function fetchCurrentPrice(symbol, coingeckoId, geckoTokenAddr) {
+      const sym = (symbol || "").toUpperCase().trim();
+      const cgId = (coingeckoId || "").trim();
+      const addr = (geckoTokenAddr || "").trim();
+
+      // If we have a CoinGecko ID, use that
+      if (cgId) {
+        try {
+          const res = await fetch(
+            `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(cgId)}&vs_currencies=usd`
+          );
+          if (!res.ok) throw new Error("CoinGecko error");
+          const json = await res.json();
+          if (json && json[cgId] && typeof json[cgId].usd === "number") {
+            return json[cgId].usd;
+          }
+        } catch (e) {
+          console.error("CoinGecko fetch failed", e);
+        }
+      }
+
+      // Fallback: if symbol is one of our known majors, map to ID
+      const fallbackId = COINGECKO_MAP[sym];
+      if (fallbackId) {
+        try {
+          const res = await fetch(
+            `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(fallbackId)}&vs_currencies=usd`
+          );
+          if (!res.ok) throw new Error("CoinGecko error");
+          const json = await res.json();
+          if (json && json[fallbackId] && typeof json[fallbackId].usd === "number") {
+            return json[fallbackId].usd;
+          }
+        } catch (e) {
+          console.error("Fallback CoinGecko fetch failed", e);
+        }
+      }
+
+      // Last resort: no price
+      return null;
+    }
+
+    // RENDER TOKENS (sorted + Rowan roasts)
     function renderTokens() {
       tokensList.innerHTML = "";
 
@@ -674,7 +818,7 @@
 
       emptyState.style.display = "none";
 
-      // Sort by profit/loss (highest first) without mutating storage order
+      // Sort indices by P/L descending (highest profit first)
       const indices = tokens.map((_, i) => i).sort((a, b) => {
         const pnlA = typeof tokens[a].pnl === "number" ? tokens[a].pnl : 0;
         const pnlB = typeof tokens[b].pnl === "number" ? tokens[b].pnl : 0;
@@ -715,14 +859,15 @@
 
       indices.forEach((index) => {
         const t = tokens[index];
+
         const cost  = typeof t.cost === "number" ? t.cost : 0;
         const pnl   = typeof t.pnl === "number" ? t.pnl : 0;
         const value = typeof t.value === "number" ? t.value : 0;
 
         const isProfit = pnl >= 0;
         const pnlClass = isProfit ? "token-pnl-positive" : "token-pnl-negative";
-        const sign = isProfit ? "+" : "";
-        const pct = cost !== 0 ? (pnl / cost) * 100 : 0;
+        const sign     = isProfit ? "+" : "";
+        const pct      = cost !== 0 ? (pnl / cost) * 100 : 0;
 
         let roastText;
         if (pnl > tolerance) {
@@ -775,12 +920,229 @@
       });
     }
 
-    // (Your existing handlers for clicking token cards, editing, adding more, deleting,
-    //  plus the refreshPrices logic, should still sit below here in your real file.)
+    // Handle clicks on token cards (menu + actions)
+    tokensList.addEventListener("click", (e) => {
+      const card = e.target.closest(".token-card");
+      if (!card) return;
+      const index = parseInt(card.dataset.index, 10);
+      if (Number.isNaN(index)) return;
+
+      const menuBtn = e.target.closest(".token-menu-btn");
+      const menu    = card.querySelector(".token-menu");
+
+      if (menuBtn) {
+        // Toggle this card's menu
+        document.querySelectorAll(".token-menu").forEach(m => {
+          if (m !== menu) m.classList.add("hidden");
+        });
+        menu.classList.toggle("hidden");
+        return;
+      }
+
+      const actionBtn = e.target.closest(".token-menu-item");
+      if (!actionBtn) return;
+
+      const action = actionBtn.dataset.action;
+      menu.classList.add("hidden");
+
+      if (action === "delete") {
+        tokens.splice(index, 1);
+        saveTokens();
+        renderTokens();
+        return;
+      }
+
+      if (action === "edit") {
+        const t = tokens[index];
+        formMode = "edit";
+        editingIndex = index;
+
+        tokenFormTitle.textContent = `Edit ${t.name}`;
+        tokenFormSubtitle.textContent = "Adjust this position’s details.";
+        amountLabel.textContent = "Total amount owned";
+
+        coinNameInput.value   = t.name;
+        coinSymbolInput.value = t.symbol;
+        coinAmountInput.value = t.amount;
+        totalSpentInput.value = t.cost.toFixed(2);
+        cgIdInput.value       = t.coingeckoId || "";
+        geckoAddressInput.value = t.geckoTokenAddress || "";
+
+        quickCoinSelect.value = "";
+        openTokenForm();
+        return;
+      }
+
+      if (action === "add") {
+        const t = tokens[index];
+        addMoreIndex = index;
+
+        addMoreTitle.textContent = `Add more ${t.symbol}`;
+        addMoreSubtitle.textContent = `Log another buy into ${t.name}.`;
+        addMoreAmountLabel.textContent = "Additional amount bought";
+
+        addMoreAmountInput.value = "";
+        addMoreUsdInput.value    = "";
+
+        openAddMoreForm();
+        return;
+      }
+    });
+
+    // Submit main token form
+    tokenFormElement.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const name   = coinNameInput.value.trim();
+      const symbol = coinSymbolInput.value.trim().toUpperCase();
+      const amount = parseFloat(coinAmountInput.value);
+      const totalSpent = parseFloat(totalSpentInput.value);
+      const coingeckoId = cgIdInput.value.trim();
+      const geckoTokenAddr = geckoAddressInput.value.trim();
+
+      if (!name || !symbol || !Number.isFinite(amount) || amount <= 0 || !Number.isFinite(totalSpent) || totalSpent <= 0) {
+        alert("Please fill out all fields with valid values.");
+        return;
+      }
+
+      const buyPrice = totalSpent / amount;
+
+      let lastPrice = await fetchCurrentPrice(symbol, coingeckoId, geckoTokenAddr);
+      if (formMode === "edit" && editingIndex !== null && (lastPrice === null)) {
+        const existing = tokens[editingIndex];
+        lastPrice = existing.lastPrice || buyPrice;
+      }
+      if (lastPrice === null) lastPrice = buyPrice;
+
+      const cost  = totalSpent;
+      const value = lastPrice * amount;
+      const pnl   = value - cost;
+
+      if (formMode === "edit" && editingIndex !== null) {
+        const existing = tokens[editingIndex];
+        tokens[editingIndex] = {
+          ...existing,
+          name,
+          symbol,
+          amount,
+          totalSpent: cost,
+          buyPrice,
+          lastPrice,
+          cost,
+          value,
+          pnl,
+          coingeckoId: coingeckoId || undefined,
+          geckoTokenAddress: geckoTokenAddr || undefined
+        };
+      } else {
+        tokens.push({
+          name,
+          symbol,
+          amount,
+          totalSpent,
+          buyPrice,
+          lastPrice,
+          cost,
+          value,
+          pnl,
+          coingeckoId: coingeckoId || undefined,
+          geckoTokenAddress: geckoTokenAddr || undefined
+        });
+      }
+
+      saveTokens();
+      renderTokens();
+      closeTokenForm();
+    });
+
+    // Submit "add more" form
+    addMoreFormElement.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (addMoreIndex === null) return;
+
+      const extraAmount = parseFloat(addMoreAmountInput.value);
+      const extraUsd    = parseFloat(addMoreUsdInput.value);
+
+      if (!Number.isFinite(extraAmount) || extraAmount <= 0 || !Number.isFinite(extraUsd) || extraUsd <= 0) {
+        alert("Please enter valid additional amount and USD spent.");
+        return;
+      }
+
+      const t = tokens[addMoreIndex];
+
+      const oldAmount = t.amount;
+      const oldCost   = t.cost;
+
+      const newAmount = oldAmount + extraAmount;
+      const newCost   = oldCost + extraUsd;
+
+      const buyPrice  = newCost / newAmount;
+
+      let lastPrice = await fetchCurrentPrice(t.symbol, t.coingeckoId, t.geckoTokenAddress);
+      if (lastPrice === null) lastPrice = t.lastPrice || buyPrice;
+
+      const value = newAmount * lastPrice;
+      const pnl   = value - newCost;
+
+      tokens[addMoreIndex] = {
+        ...t,
+        amount: newAmount,
+        totalSpent: newCost,
+        buyPrice,
+        lastPrice,
+        cost: newCost,
+        value,
+        pnl
+      };
+
+      saveTokens();
+      renderTokens();
+      closeAddMoreForm();
+    });
+
+    // Refresh prices for all tokens
+    refreshPricesBtn.addEventListener("click", async () => {
+      if (!tokens.length) return;
+
+      const originalText = refreshPricesBtn.textContent;
+      refreshPricesBtn.textContent = "Refreshing…";
+      refreshPricesBtn.classList.add("pill-busy");
+
+      try {
+        for (let i = 0; i < tokens.length; i++) {
+          const t = tokens[i];
+          const price = await fetchCurrentPrice(t.symbol, t.coingeckoId, t.geckoTokenAddress);
+          if (price === null) continue;
+
+          const lastPrice = price;
+          const value     = t.amount * lastPrice;
+          const cost      = t.cost;
+          const pnl       = value - cost;
+
+          tokens[i] = {
+            ...t,
+            lastPrice,
+            value,
+            pnl
+          };
+        }
+
+        saveTokens();
+        renderTokens();
+        lastUpdatedEl.textContent = "Last refreshed: " + new Date().toLocaleString();
+      } catch (e) {
+        console.error("Failed to refresh prices", e);
+        lastUpdatedEl.textContent = "Could not refresh prices (network error).";
+      } finally {
+        refreshPricesBtn.classList.remove("pill-busy");
+        refreshPricesBtn.textContent = originalText;
+      }
+    });
 
     // Load saved tokens on startup
     loadTokens();
     renderTokens();
   </script>
+
 </body>
 </html>
