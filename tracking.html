@@ -509,9 +509,9 @@
               <label class="form-label" for="coingeckoId">Advanced price source (optional)</label>
               <input id="coingeckoId" class="token-input" type="text" placeholder="CoinGecko ID (e.g. dogwifcoin)" />
               <div style="height:0.4rem;"></div>
-              <input id="geckoTerminalUrl" class="token-input" type="text" placeholder="GeckoTerminal URL (token or pool)" />
+              <input id="geckoTokenAddress" class="token-input" type="text" placeholder="GeckoTerminal token address (Solana)" />
               <div class="form-help">
-                Paste a GeckoTerminal link, e.g. https://www.geckoterminal.com/solana/tokens/ADDRESS or /pools/ADDRESS.
+                Paste the token address used on Solana DEXes, e.g. 4LPb8xzg4a5Uxq8GnJmP6k4MeZi5g9DAJim8c58TpHAS.
               </div>
             </div>
 
@@ -617,7 +617,7 @@
     const quickCoinSelect    = document.getElementById("quickCoinSelect");
     const advancedRow        = document.getElementById("advancedRow");
     const cgIdInput          = document.getElementById("coingeckoId");
-    const geckoUrlInput      = document.getElementById("geckoTerminalUrl");
+    const geckoAddressInput  = document.getElementById("geckoTokenAddress");
 
     const coinNameInput      = document.getElementById("coinName");
     const coinSymbolInput    = document.getElementById("coinSymbol");
@@ -673,7 +673,7 @@
       quickCoinSelect.value = "";
       advancedRow.classList.add("hidden");
       cgIdInput.value = "";
-      geckoUrlInput.value = "";
+      geckoAddressInput.value = "";
       amountLabel.textContent = "Amount of coin bought";
       formMode = "new";
       editingIndex = null;
@@ -723,12 +723,12 @@
       if (!value) {
         advancedRow.classList.add("hidden");
         cgIdInput.value = "";
-        geckoUrlInput.value = "";
+        geckoAddressInput.value = "";
         return;
       }
 
       if (value === "__custom__") {
-        // Custom memecoin: user fills name, symbol, and advanced fields manually
+        // Custom token: user fills name, symbol, and advanced fields manually
         coinNameInput.value = "";
         coinSymbolInput.value = "";
         updateAmountLabel();
@@ -745,31 +745,19 @@
       // Hide advanced row for standard coins
       advancedRow.classList.add("hidden");
       cgIdInput.value = "";
-      geckoUrlInput.value = "";
+      geckoAddressInput.value = "";
     });
 
     coinSymbolInput.addEventListener("input", updateAmountLabel);
 
-    async function fetchPriceFromGeckoTerminalUrl(url) {
-      if (!url) return null;
+    async function fetchPriceFromGeckoTokenAddress(address) {
+      if (!address) return null;
+      const trimmed = address.trim();
+      if (!trimmed) return null;
+
+      const apiUrl = `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${trimmed}`;
+
       try {
-        const u = new URL(url);
-        const parts = u.pathname.split("/").filter(Boolean);
-        // Expecting something like: /solana/tokens/ADDRESS or /solana/pools/ADDRESS
-        if (parts.length < 3) return null;
-        const network = parts[0];
-        const type    = parts[1];
-        const id      = parts[2];
-
-        let apiUrl = "";
-        if (type === "tokens") {
-          apiUrl = `https://api.geckoterminal.com/api/v2/networks/${network}/tokens/${id}`;
-        } else if (type === "pools") {
-          apiUrl = `https://api.geckoterminal.com/api/v2/networks/${network}/pools/${id}`;
-        } else {
-          return null;
-        }
-
         const res = await fetch(apiUrl);
         if (!res.ok) return null;
         const json = await res.json();
@@ -787,10 +775,10 @@
       }
     }
 
-    async function fetchCurrentPrice(symbol, coingeckoId, geckoUrl) {
-      // 1) Try GeckoTerminal URL first if provided
-      if (geckoUrl && geckoUrl.trim()) {
-        const p = await fetchPriceFromGeckoTerminalUrl(geckoUrl.trim());
+    async function fetchCurrentPrice(symbol, coingeckoId, geckoTokenAddress) {
+      // 1) Try GeckoTerminal token address (Solana) first, if provided
+      if (geckoTokenAddress && geckoTokenAddress.trim()) {
+        const p = await fetchPriceFromGeckoTokenAddress(geckoTokenAddress.trim());
         if (p !== null) return p;
       }
 
@@ -922,14 +910,14 @@
         updateAmountLabel();
 
         // Advanced fields
-        if (t.coingeckoId || t.geckoTerminalUrl) {
+        if (t.coingeckoId || t.geckoTokenAddress) {
           advancedRow.classList.remove("hidden");
-          cgIdInput.value     = t.coingeckoId || "";
-          geckoUrlInput.value = t.geckoTerminalUrl || "";
+          cgIdInput.value          = t.coingeckoId || "";
+          geckoAddressInput.value  = t.geckoTokenAddress || "";
         } else {
           advancedRow.classList.add("hidden");
-          cgIdInput.value     = "";
-          geckoUrlInput.value = "";
+          cgIdInput.value          = "";
+          geckoAddressInput.value  = "";
         }
 
         openTokenForm();
@@ -948,12 +936,12 @@
     tokenFormElement.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const name        = coinNameInput.value.trim();
-      const symbol      = coinSymbolInput.value.trim().toUpperCase();
-      const amount      = parseFloat(coinAmountInput.value);
-      const totalSpent  = parseFloat(totalSpentInput.value);
-      const coingeckoId = cgIdInput.value.trim();
-      const geckoUrl    = geckoUrlInput.value.trim();
+      const name             = coinNameInput.value.trim();
+      const symbol           = coinSymbolInput.value.trim().toUpperCase();
+      const amount           = parseFloat(coinAmountInput.value);
+      const totalSpent       = parseFloat(totalSpentInput.value);
+      const coingeckoId      = cgIdInput.value.trim();
+      const geckoTokenAddr   = geckoAddressInput.value.trim();
 
       if (!name || !symbol || isNaN(amount) || isNaN(totalSpent) || amount <= 0) {
         alert("Please fill out all fields with valid values.");
@@ -962,7 +950,7 @@
 
       const buyPrice = totalSpent / amount;
 
-      let lastPrice = await fetchCurrentPrice(symbol, coingeckoId, geckoUrl);
+      let lastPrice = await fetchCurrentPrice(symbol, coingeckoId, geckoTokenAddr);
       if (formMode === "edit" && editingIndex !== null && (lastPrice === null)) {
         const existing = tokens[editingIndex];
         lastPrice = existing.lastPrice || buyPrice;
@@ -987,7 +975,7 @@
           value,
           pnl,
           coingeckoId: coingeckoId || undefined,
-          geckoTerminalUrl: geckoUrl || undefined
+          geckoTokenAddress: geckoTokenAddr || undefined
         };
       } else {
         tokens.push({
@@ -1001,7 +989,7 @@
           value,
           pnl,
           coingeckoId: coingeckoId || undefined,
-          geckoTerminalUrl: geckoUrl || undefined
+          geckoTokenAddress: geckoTokenAddr || undefined
         });
       }
 
@@ -1028,7 +1016,7 @@
       t.totalSpent  = (t.totalSpent || 0) + extraUsd;
       t.buyPrice    = t.totalSpent / t.amount;
 
-      let lastPrice = await fetchCurrentPrice(t.symbol, t.coingeckoId, t.geckoTerminalUrl);
+      let lastPrice = await fetchCurrentPrice(t.symbol, t.coingeckoId, t.geckoTokenAddress);
       if (lastPrice === null) lastPrice = t.lastPrice || t.buyPrice;
 
       t.lastPrice = lastPrice;
@@ -1056,7 +1044,7 @@
       try {
         for (let i = 0; i < tokens.length; i++) {
           const t = tokens[i];
-          const p = await fetchCurrentPrice(t.symbol, t.coingeckoId, t.geckoTerminalUrl);
+          const p = await fetchCurrentPrice(t.symbol, t.coingeckoId, t.geckoTokenAddress);
           if (p !== null) {
             t.lastPrice = p;
             t.value     = p * t.amount;
@@ -1070,7 +1058,7 @@
           renderTokens();
           lastUpdatedEl.textContent = `Last updated: ${formatTimestamp()} (${updatedCount} token${updatedCount > 1 ? "s" : ""})`;
         } else {
-          lastUpdatedEl.textContent = "No prices refreshed (set CoinGecko IDs or GeckoTerminal URLs, or use BTC, ETH, SOL, XRP, DOGE, ADA).";
+          lastUpdatedEl.textContent = "No prices refreshed (set CoinGecko IDs or Solana token addresses, or use BTC, ETH, SOL, XRP, DOGE, ADA).";
         }
       } catch (err) {
         console.error("Refresh failed", err);
