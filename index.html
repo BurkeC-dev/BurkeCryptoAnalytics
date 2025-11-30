@@ -279,12 +279,14 @@
       color: rgba(169,176,214,0.7);
     }
 
+    /* prettier card-like container for rows */
     .table-wrapper {
       margin-top: 1rem;
-      padding: .2rem;
-      background: rgba(16,18,45,0.95);
-      border-radius: 16px;
-      border: 1px solid rgba(140,155,255,0.3);
+      padding: 0.6rem;
+      background: radial-gradient(circle at top left, rgba(19,30,68,0.95), rgba(5,7,22,0.98));
+      border-radius: 20px;
+      border: 1px solid rgba(140,155,255,0.5);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.7);
     }
     table {
       width: 100%;
@@ -303,12 +305,16 @@
 
     /* Card-like token rows */
     .token-row {
-      background: radial-gradient(circle at top left, rgba(113,197,255,0.16), rgba(10,12,35,0.95));
-      border-radius: 16px;
-      padding: 0.7rem 0.9rem;
-      margin: 0.5rem 0.3rem;
-      box-shadow: 0 14px 30px rgba(0,0,0,0.55);
-      border: 1px solid rgba(140,155,255,0.45);
+      background: radial-gradient(circle at top left, rgba(113,197,255,0.18), rgba(10,12,35,0.98));
+      border-radius: 18px;
+      padding: 0.75rem 0.9rem;
+      margin: 0.55rem 0.25rem;
+      box-shadow: 0 16px 32px rgba(0,0,0,0.65);
+      border: 1px solid rgba(140,155,255,0.6);
+    }
+
+    .token-row td {
+      padding: 0.2rem 0;
     }
 
     .token-name { font-weight: 600; }
@@ -318,6 +324,16 @@
     }
     .token-pnl-positive { color: var(--success); }
     .token-pnl-negative { color: var(--danger); }
+
+    /* little pill for percentage next to value */
+    .token-pct {
+      margin-left: 0.4rem;
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(10,12,35,0.95);
+      border: 1px solid currentColor;
+    }
   </style>
 </head>
 
@@ -459,6 +475,7 @@
       document.getElementById(viewName + "View").classList.add("active");
     }
 
+    // Start on Overview
     showView("overview");
 
     /* TOKEN FORM + TRACKER LOGIC */
@@ -574,14 +591,16 @@
         const valueTd = document.createElement("td");
         valueTd.innerHTML = `
           <div class="token-meta">Value</div>
-          <div class="${pnlClass}">$${t.value.toFixed(2)}</div>
+          <div class="${pnlClass}">
+            $${t.value.toFixed(2)}
+            <span class="token-pct ${pnlClass}">${sign}${pct.toFixed(2)}%</span>
+          </div>
         `;
 
         const pnlTd = document.createElement("td");
         pnlTd.innerHTML = `
           <div class="token-meta">${pnlLabel}</div>
           <div class="${pnlClass}">$${t.pnl.toFixed(2)}</div>
-          <div class="token-meta ${pnlClass}">${sign}${pct.toFixed(2)}%</div>
         `;
 
         tr.appendChild(nameTd);
