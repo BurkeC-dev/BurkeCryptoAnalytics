@@ -289,6 +289,7 @@
 
     /* Individual soft-glow token cards */
     .token-card {
+      position: relative;
       border-radius: 20px;
       padding: 0.85rem 1rem;
       background:
@@ -299,9 +300,17 @@
         0 0 8px rgba(113,197,255,0.4);
     }
 
+    .token-card-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.2rem;
+    }
+
     .token-card-header {
       font-weight: 600;
-      margin-bottom: 0.15rem;
+      font-size: 0.9rem;
     }
 
     .token-card-amount {
@@ -343,6 +352,48 @@
       margin-top: 0.8rem;
       font-size: 0.78rem;
       color: var(--text-muted);
+    }
+
+    /* three-dot menu button */
+    .token-menu-btn {
+      background: transparent;
+      border: none;
+      color: var(--lavender);
+      font-size: 1.2rem;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .token-menu {
+      position: absolute;
+      top: 0.6rem;
+      right: 0.8rem;
+      background: rgba(8,10,30,0.98);
+      border-radius: 12px;
+      border: 1px solid rgba(140,155,255,0.7);
+      box-shadow: 0 14px 30px rgba(0,0,0,0.8);
+      padding: 0.25rem 0;
+      min-width: 120px;
+      z-index: 10;
+    }
+
+    .token-menu-item {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-size: 0.78rem;
+      text-align: left;
+      padding: 0.35rem 0.8rem;
+      cursor: pointer;
+    }
+
+    .token-menu-item:not(:last-child) {
+      border-bottom: 1px solid rgba(40,50,100,0.8);
+    }
+
+    .token-menu-delete {
+      color: var(--danger);
     }
   </style>
 </head>
@@ -393,12 +444,12 @@
         <button id="addTokenBtn" class="primary-pill">Add token</button>
         <button id="refreshPricesBtn" class="ghost-pill">Refresh prices</button>
 
-        <!-- TOKEN FORM PANEL -->
+        <!-- TOKEN FORM PANEL (NEW / EDIT) -->
         <div id="tokenForm" class="token-form hidden">
           <div class="token-form-header">
             <div>
-              <div class="token-form-title">New token entry</div>
-              <div class="token-form-subtext">
+              <div class="token-form-title" id="tokenFormTitle">New token entry</div>
+              <div class="token-form-subtext" id="tokenFormSubtitle">
                 Choose a coin, log your entry, we’ll track the rest.
               </div>
             </div>
@@ -441,6 +492,35 @@
 
             <div class="form-row" style="margin-top:0.8rem;">
               <button type="submit" class="primary-pill">Save token</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- ADD MORE FORM PANEL -->
+        <div id="addMoreForm" class="token-form hidden">
+          <div class="token-form-header">
+            <div>
+              <div class="token-form-title" id="addMoreTitle">Add more</div>
+              <div class="token-form-subtext" id="addMoreSubtitle">
+                Add more to this position.
+              </div>
+            </div>
+            <button class="token-form-close" id="addMoreClose">×</button>
+          </div>
+
+          <form id="addMoreFormElement">
+            <div class="form-row">
+              <label class="form-label" id="addMoreAmountLabel" for="addMoreAmount">Additional amount bought</label>
+              <input id="addMoreAmount" class="token-input" type="number" min="0" step="0.00000001" placeholder="e.g. 0.001" required />
+            </div>
+
+            <div class="form-row">
+              <label class="form-label" for="addMoreUsd">Additional spent (USD)</label>
+              <input id="addMoreUsd" class="token-input" type="number" min="0" step="0.01" placeholder="e.g. 75" required />
+            </div>
+
+            <div class="form-row" style="margin-top:0.8rem;">
+              <button type="submit" class="primary-pill">Save</button>
             </div>
           </form>
         </div>
@@ -489,6 +569,17 @@
     const tokenForm        = document.getElementById("tokenForm");
     const tokenFormClose   = document.getElementById("tokenFormClose");
     const tokenFormElement = document.getElementById("tokenFormElement");
+    const tokenFormTitle   = document.getElementById("tokenFormTitle");
+    const tokenFormSubtitle= document.getElementById("tokenFormSubtitle");
+
+    const addMoreForm          = document.getElementById("addMoreForm");
+    const addMoreClose         = document.getElementById("addMoreClose");
+    const addMoreFormElement   = document.getElementById("addMoreFormElement");
+    const addMoreAmountInput   = document.getElementById("addMoreAmount");
+    const addMoreUsdInput      = document.getElementById("addMoreUsd");
+    const addMoreTitle         = document.getElementById("addMoreTitle");
+    const addMoreSubtitle      = document.getElementById("addMoreSubtitle");
+    const addMoreAmountLabel   = document.getElementById("addMoreAmountLabel");
 
     const quickCoinSelect  = document.getElementById("quickCoinSelect");
     const coinNameInput    = document.getElementById("coinName");
@@ -512,6 +603,10 @@
       ADA: "cardano"
     };
 
+    let formMode = "new";      // "new" | "edit"
+    let editingIndex = null;   // index in tokens[]
+    let addMoreIndex = null;   // index in tokens[]
+
     function loadTokens() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -530,14 +625,25 @@
     }
 
     addTokenBtn.addEventListener("click", () => {
+      formMode = "new";
+      editingIndex = null;
+      tokenFormTitle.textContent = "New token entry";
+      tokenFormSubtitle.textContent = "Choose a coin, log your entry, we’ll track the rest.";
       tokenForm.classList.remove("hidden");
       addTokenBtn.style.display = "none";
     });
 
-    tokenFormClose.addEventListener("click", () => {
+    function closeTokenForm() {
       tokenForm.classList.add("hidden");
       addTokenBtn.style.display = "inline-block";
-    });
+      tokenFormElement.reset();
+      quickCoinSelect.value = "";
+      amountLabel.textContent = "Amount of coin bought";
+      formMode = "new";
+      editingIndex = null;
+    }
+
+    tokenFormClose.addEventListener("click", closeTokenForm);
 
     function updateAmountLabel() {
       const sym = coinSymbolInput.value.trim().toUpperCase();
@@ -590,7 +696,7 @@
 
       emptyState.style.display = "none";
 
-      tokens.forEach((t) => {
+      tokens.forEach((t, index) => {
         const isProfit = t.pnl >= 0;
         const pnlLabel = isProfit ? "Profit" : "Loss";
         const pnlClass = isProfit ? "token-pnl-positive" : "token-pnl-negative";
@@ -599,9 +705,19 @@
 
         const card = document.createElement("div");
         card.className = "token-card";
+        card.dataset.index = index;
 
         card.innerHTML = `
-          <div class="token-card-header">${t.name} (${t.symbol})</div>
+          <div class="token-card-header-row">
+            <div class="token-card-header">${t.name} (${t.symbol})</div>
+            <button class="token-menu-btn" type="button" aria-label="Token menu">⋮</button>
+            <div class="token-menu hidden">
+              <button class="token-menu-item" data-action="edit" type="button">Edit</button>
+              <button class="token-menu-item" data-action="add" type="button">Add</button>
+              <button class="token-menu-item token-menu-delete" data-action="delete" type="button">Delete</button>
+            </div>
+          </div>
+
           <div class="token-card-amount">Amount: ${t.amount}</div>
 
           <div class="token-row-line">
@@ -627,6 +743,69 @@
       });
     }
 
+    // Handle clicks on token cards (menu + actions)
+    tokensList.addEventListener("click", (e) => {
+      const card = e.target.closest(".token-card");
+      if (!card) return;
+      const index = parseInt(card.dataset.index, 10);
+      if (Number.isNaN(index)) return;
+
+      const menuBtn = e.target.closest(".token-menu-btn");
+      if (menuBtn) {
+        const menu = card.querySelector(".token-menu");
+        if (menu) menu.classList.toggle("hidden");
+        return;
+      }
+
+      const menuItem = e.target.closest(".token-menu-item");
+      if (!menuItem) return;
+
+      const action = menuItem.dataset.action;
+      const menu = card.querySelector(".token-menu");
+      if (menu) menu.classList.add("hidden");
+
+      if (action === "delete") {
+        tokens.splice(index, 1);
+        saveTokens();
+        renderTokens();
+      } else if (action === "edit") {
+        const t = tokens[index];
+        formMode = "edit";
+        editingIndex = index;
+
+        tokenFormTitle.textContent = `Edit ${t.symbol}`;
+        tokenFormSubtitle.textContent = "Adjust your amount and total spent.";
+
+        coinNameInput.value = t.name;
+        coinSymbolInput.value = t.symbol;
+        coinAmountInput.value = t.amount;
+        totalSpentInput.value = t.totalSpent;
+        updateAmountLabel();
+
+        tokenForm.classList.remove("hidden");
+        addTokenBtn.style.display = "none";
+      } else if (action === "add") {
+        const t = tokens[index];
+        addMoreIndex = index;
+
+        addMoreTitle.textContent = `Add more ${t.symbol}`;
+        addMoreSubtitle.textContent = `Add more ${t.symbol} and USD spent to this position.`;
+        addMoreAmountLabel.textContent = `${t.symbol} bought`;
+
+        addMoreForm.classList.remove("hidden");
+        addTokenBtn.style.display = "none";
+      }
+    });
+
+    function closeAddMoreForm() {
+      addMoreForm.classList.add("hidden");
+      addMoreFormElement.reset();
+      addMoreIndex = null;
+      addTokenBtn.style.display = "inline-block";
+    }
+
+    addMoreClose.addEventListener("click", closeAddMoreForm);
+
     tokenFormElement.addEventListener("submit", async (e) => {
       e.preventDefault();
 
@@ -643,32 +822,80 @@
       const buyPrice = totalSpent / amount;
 
       let lastPrice = await fetchCurrentPrice(symbol);
+      if (formMode === "edit" && editingIndex !== null && (lastPrice === null)) {
+        const existing = tokens[editingIndex];
+        lastPrice = existing.lastPrice || buyPrice;
+      }
       if (lastPrice === null) lastPrice = buyPrice;
 
       const cost  = totalSpent;
       const value = lastPrice * amount;
       const pnl   = value - cost;
 
-      tokens.push({
-        name,
-        symbol,
-        amount,
-        totalSpent,
-        buyPrice,
-        lastPrice,
-        cost,
-        value,
-        pnl
-      });
+      if (formMode === "edit" && editingIndex !== null) {
+        const existing = tokens[editingIndex];
+        tokens[editingIndex] = {
+          ...existing,
+          name,
+          symbol,
+          amount,
+          totalSpent,
+          buyPrice,
+          lastPrice,
+          cost,
+          value,
+          pnl
+        };
+      } else {
+        tokens.push({
+          name,
+          symbol,
+          amount,
+          totalSpent,
+          buyPrice,
+          lastPrice,
+          cost,
+          value,
+          pnl
+        });
+      }
 
       saveTokens();
       renderTokens();
+      closeTokenForm();
+    });
 
-      tokenFormElement.reset();
-      quickCoinSelect.value = "";
-      amountLabel.textContent = "Amount of coin bought";
-      tokenForm.classList.add("hidden");
-      addTokenBtn.style.display = "inline-block";
+    addMoreFormElement.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (addMoreIndex === null) return;
+
+      const extraAmount = parseFloat(addMoreAmountInput.value);
+      const extraUsd    = parseFloat(addMoreUsdInput.value);
+
+      if (isNaN(extraAmount) || extraAmount <= 0 || isNaN(extraUsd) || extraUsd < 0) {
+        alert("Please enter a valid extra amount and USD spent.");
+        return;
+      }
+
+      const t = tokens[addMoreIndex];
+
+      t.amount      = (t.amount || 0) + extraAmount;
+      t.totalSpent  = (t.totalSpent || 0) + extraUsd;
+      t.buyPrice    = t.totalSpent / t.amount;
+
+      let lastPrice = await fetchCurrentPrice(t.symbol);
+      if (lastPrice === null) lastPrice = t.lastPrice || t.buyPrice;
+
+      t.lastPrice = lastPrice;
+      t.cost      = t.totalSpent;
+      t.value     = t.lastPrice * t.amount;
+      t.pnl       = t.value - t.cost;
+
+      tokens[addMoreIndex] = t;
+
+      saveTokens();
+      renderTokens();
+      closeAddMoreForm();
     });
 
     // Load saved tokens on startup
