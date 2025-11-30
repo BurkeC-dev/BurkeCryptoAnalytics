@@ -210,4 +210,279 @@
       padding: 0.9rem 0.9rem 0.8rem;
       background: rgba(6,8,26,0.95);
       border-radius: 18px;
-      border: 1px s
+      border: 1px solid rgba(104,122,255,0.4);
+    }
+
+    .token-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.5rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .token-title {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .token-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    .token-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .link-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.45rem 1.1rem;
+      border-radius: 999px;
+      background: var(--pill-bg);
+      color: #06061a;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      box-shadow:
+        0 0 3px var(--blue),
+        0 0 7px rgba(113,197,255,0.8);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.12s ease;
+      margin-right: 0.4rem;
+    }
+
+    .link-pill:active {
+      transform: scale(0.97);
+      box-shadow:
+        0 0 2px var(--blue),
+        0 0 4px rgba(113,197,255,0.6);
+    }
+
+    .link-pill.secondary {
+      background: transparent;
+      color: var(--lavender);
+      border: 1px solid rgba(140,155,255,0.7);
+      box-shadow: none;
+    }
+
+    .empty-state {
+      margin-top: 0.6rem;
+      padding: 0.75rem 0.8rem;
+      border-radius: 16px;
+      border: 1px dashed rgba(140,155,255,0.45);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .empty-state strong {
+      color: var(--lavender);
+    }
+
+    .hint {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- MENU OVERLAY -->
+  <div class="menu-overlay" id="menuOverlay">
+    <button class="menu-close" id="menuClose">×</button>
+
+    <div class="menu-title soft-glow">Menu</div>
+
+    <div class="menu-items">
+      <a class="menu-item" href="index.html">Overview</a>
+      <a class="menu-item" href="tracking.html">Tracker</a>
+      <a class="menu-item" href="charts.html">Charts</a>
+    </div>
+  </div>
+
+  <div class="app-shell">
+    <header class="top-bar">
+      <div class="hamburger" id="hamburger">
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+      </div>
+      <div class="logo-title">Burke Crypto Analytics</div>
+    </header>
+
+    <main class="card">
+      <h2 class="page-title underline-soft">Charts</h2>
+      <p class="view-description">
+        Quick links out to full-screen live charts for each tracked token.
+      </p>
+      <p class="last-updated" id="lastUpdatedText"></p>
+
+      <div class="chart-section-title">Token chart links</div>
+      <div id="tokenLinksContainer"></div>
+      <div class="empty-state" id="tokensEmpty" style="display:none;">
+        <strong>No tokens yet.</strong> Add tokens in the <em>Tracker</em> tab first.  
+        In the advanced section, set a <em>GeckoTerminal token address</em> to enable chart links.
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // ====== MENU ======
+    const hamburger   = document.getElementById("hamburger");
+    const menuOverlay = document.getElementById("menuOverlay");
+    const menuClose   = document.getElementById("menuClose");
+
+    hamburger.addEventListener("click", () => {
+      menuOverlay.classList.add("active");
+    });
+    menuClose.addEventListener("click", () => {
+      menuOverlay.classList.remove("active");
+    });
+    menuOverlay.addEventListener("click", (e) => {
+      if (e.target === menuOverlay) {
+        menuOverlay.classList.remove("active");
+      }
+    });
+
+    // ====== CONFIG ======
+    const STORAGE_KEY   = "bca_tokens_v1";
+    const GECKO_NETWORK = "solana";
+
+    const lastUpdatedText     = document.getElementById("lastUpdatedText");
+    const tokenLinksContainer = document.getElementById("tokenLinksContainer");
+    const tokensEmpty         = document.getElementById("tokensEmpty");
+
+    function loadTokens() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function normalizeToken(token) {
+      return {
+        name: token.name || token.tokenName || token.symbol || "Unknown",
+        symbol: (token.symbol || token.ticker || "").toUpperCase(),
+        amount: Number(token.amount ?? 0),
+        geckoTokenAddress: token.geckoTokenAddress || ""
+      };
+    }
+
+    function formatTimestamp(ts) {
+      const d = ts ? new Date(ts) : new Date();
+      const month = d.getMonth() + 1;
+      const day   = d.getDate();
+      const hours = d.getHours();
+      const minutes = d.getMinutes().toString().padStart(2, "0");
+      const ampm = hours >= 12 ? "PM" : "AM";
+      const hr12 = hours % 12 || 12;
+      return `${month}/${day} ${hr12}:${minutes} ${ampm}`;
+    }
+
+    function buildGeckoTerminalUrl(address) {
+      const trimmed = address.trim();
+      if (!trimmed) return null;
+      const base = "https://www.geckoterminal.com";
+      return `${base}/${encodeURIComponent(GECKO_NETWORK)}/tokens/${encodeURIComponent(trimmed)}`;
+    }
+
+    function renderLinks() {
+      const rawTokens = loadTokens().map(normalizeToken);
+
+      tokenLinksContainer.innerHTML = "";
+
+      if (!rawTokens.length) {
+        tokensEmpty.style.display = "block";
+        lastUpdatedText.textContent = "";
+        return;
+      }
+
+      let anyShown = false;
+
+      rawTokens.forEach((t) => {
+        const card = document.createElement("div");
+        card.className = "token-link-card";
+
+        const header = document.createElement("div");
+        header.className = "token-header";
+
+        const title = document.createElement("div");
+        title.className = "token-title";
+        title.textContent = t.symbol || t.name;
+
+        const sub = document.createElement("div");
+        sub.className = "token-sub";
+        sub.textContent = t.amount > 0 ? `${t.amount} ${t.symbol || ""}`.trim() : "";
+
+        header.appendChild(title);
+        header.appendChild(sub);
+        card.appendChild(header);
+
+        const meta = document.createElement("div");
+        meta.className = "token-meta";
+        meta.textContent = t.name !== t.symbol ? t.name : "";
+        card.appendChild(meta);
+
+        const addr = (t.geckoTokenAddress || "").trim();
+        if (addr) {
+          const url = buildGeckoTerminalUrl(addr);
+          if (url) {
+            const link = document.createElement("a");
+            link.className = "link-pill";
+            link.href = url;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = "Open live chart";
+
+            card.appendChild(link);
+
+            const hint = document.createElement("div");
+            hint.className = "hint";
+            hint.textContent = "Opens GeckoTerminal in a new tab with full chart controls.";
+            card.appendChild(hint);
+
+            anyShown = true;
+          } else {
+            const hint = document.createElement("div");
+            hint.className = "hint";
+            hint.textContent =
+              "Could not build GeckoTerminal URL from this token address.";
+            card.appendChild(hint);
+          }
+        } else {
+          const hint = document.createElement("div");
+          hint.className = "hint";
+          hint.textContent =
+            "No GeckoTerminal token address set. Edit this token in the Tracker and paste the Solana token address to enable the chart link.";
+          card.appendChild(hint);
+        }
+
+        tokenLinksContainer.appendChild(card);
+      });
+
+      tokensEmpty.style.display = anyShown ? "none" : "block";
+
+      const now = Date.now();
+      lastUpdatedText.textContent =
+        `Links generated from saved tokens • ${formatTimestamp(now)}`;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderLinks();
+    });
+  </script>
+
+</body>
+</html>
