@@ -326,7 +326,7 @@
     <main class="card">
       <h2 class="page-title underline-soft">Charts</h2>
       <p class="view-description">
-        Simple 5-day price lines for tokens with a CoinGecko ID, plus quick links to full GeckoTerminal charts for any token with a saved Solana address.
+        5-day price lines for tokens with a CoinGecko ID, plus quick links to full GeckoTerminal charts for any token with a saved Solana address.
       </p>
       <p class="last-updated" id="lastUpdatedText"></p>
 
@@ -360,7 +360,7 @@
     const STORAGE_KEY   = "bca_tokens_v1";
     const GECKO_NETWORK = "solana";
     const DAYS_BACK     = 5;
-    const REFRESH_MS    = 5000; // how often to refresh while page is open
+    const REFRESH_MS    = 10000; // refresh every 10s
 
     const COINGECKO_MAP = {
       BTC: "bitcoin",
@@ -375,7 +375,8 @@
     const tokenChartsContainer = document.getElementById("tokenChartsContainer");
     const tokensEmpty          = document.getElementById("tokensEmpty");
 
-    let tokenChartInstances = [];
+    // Each entry: { token, canvasId, chart, history, hintId }
+    let tokenState = [];
 
     // ====== HELPERS ======
     function loadTokens() {
@@ -467,19 +468,14 @@
       return `${base}/${encodeURIComponent(GECKO_NETWORK)}/tokens/${encodeURIComponent(trimmed)}`;
     }
 
-    function destroyTokenCharts() {
-      tokenChartInstances.forEach(ch => ch.destroy());
-      tokenChartInstances = [];
-    }
-
-    // ====== MAIN: FETCH + RENDER ======
-    async function updateAndRender() {
+    // ====== UI SETUP (only once) ======
+    function buildUI() {
       const rawTokens = loadTokens()
         .map(normalizeToken)
         .filter(t => t.amount > 0);
 
-      destroyTokenCharts();
       tokenChartsContainer.innerHTML = "";
+      tokenState = [];
 
       if (!rawTokens.length) {
         tokensEmpty.style.display = "block";
@@ -487,20 +483,9 @@
         return;
       }
 
-      // Fetch CoinGecko history for all tokens
-      const historyResults = await Promise.all(
-        rawTokens.map(async (t) => {
-          const history = await fetchCoinGeckoHistoryForToken(t);
-          return { token: t, history };
-        })
-      );
+      tokensEmpty.style.display = "none";
 
-      let anyCharts = false;
-
-      historyResults.forEach((entry, idx) => {
-        const t = entry.token;
-        const history = entry.history;
-
+      rawTokens.forEach((t, idx) => {
         const card = document.createElement("div");
         card.className = "token-chart-card";
 
@@ -519,88 +504,24 @@
         header.appendChild(sub);
         card.appendChild(header);
 
-        // --- Chart from CoinGecko if we have history ---
-        if (history && history.length > 1) {
-          const wrapper = document.createElement("div");
-          wrapper.className = "chart-wrapper";
-          const canvas = document.createElement("canvas");
-          canvas.id = `tokenChart_${idx}`;
-          wrapper.appendChild(canvas);
-          card.appendChild(wrapper);
+        // Chart canvas (even if we don't have data yet)
+        const wrapper = document.createElement("div");
+        wrapper.className = "chart-wrapper";
+        const canvas = document.createElement("canvas");
+        const canvasId = `tokenChart_${idx}`;
+        canvas.id = canvasId;
+        wrapper.appendChild(canvas);
+        card.appendChild(wrapper);
 
-          const ctx = canvas.getContext("2d");
-          const labels = history.map(p => buildShortTime(p.time));
-          const prices = history.map(p => p.price);
+        // Hint area (we'll fill/update this during refresh)
+        const hint = document.createElement("div");
+        const hintId = `tokenHint_${idx}`;
+        hint.className = "hint";
+        hint.id = hintId;
+        card.appendChild(hint);
 
-          const chart = new Chart(ctx, {
-            type: "line",
-            data: {
-              labels,
-              datasets: [{
-                data: prices,
-                fill: true,
-                tension: 0.35,
-                borderWidth: 1.8,
-                borderColor: "rgba(113,197,255,0.96)",
-                backgroundColor: "rgba(113,197,255,0.10)",
-                pointRadius: 0,
-                pointHitRadius: 6
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  callbacks: {
-                    label: (ctx) => formatCurrency(ctx.parsed.y)
-                  }
-                }
-              },
-              scales: {
-                x: {
-                  ticks: {
-                    color: "#cbd5ff",
-                    font: { size: 9 }
-                  },
-                  grid: { display: false }
-                },
-                y: {
-                  ticks: {
-                    color: "#a9b0d6",
-                    callback: (value) => formatCurrency(value)
-                  },
-                  grid: {
-                    color: "rgba(148,163,255,0.18)",
-                    drawBorder: false
-                  }
-                }
-              }
-            }
-          });
-
-          tokenChartInstances.push(chart);
-          anyCharts = true;
-        } else {
-          const hint = document.createElement("div");
-          hint.className = "hint";
-
-          const id = getCoinGeckoId(t);
-          if (!id) {
-            hint.textContent =
-              "No CoinGecko ID configured. Edit this token in the Tracker and fill in the CoinGecko ID (or use a mapped symbol like BTC, ETH, SOL, XRP, DOGE, ADA) to see a line chart.";
-          } else {
-            hint.textContent =
-              "Could not load history from CoinGecko right now. Try again in a bit.";
-          }
-
-          card.appendChild(hint);
-        }
-
-        // --- GeckoTerminal link if we have a Solana token address ---
-        const geckoAddr = (t.geckoTokenAddress || "").trim();
-        const geckoUrl = buildGeckoTerminalUrl(geckoAddr);
+        // GeckoTerminal link (for memecoins / anything with Solana address)
+        const geckoUrl = buildGeckoTerminalUrl(t.geckoTokenAddress);
         if (geckoUrl) {
           const link = document.createElement("a");
           link.className = "link-pill";
@@ -618,9 +539,114 @@
         }
 
         tokenChartsContainer.appendChild(card);
-      });
 
-      tokensEmpty.style.display = anyCharts ? "none" : "block";
+        tokenState.push({
+          token: t,
+          canvasId,
+          chart: null,
+          history: null,
+          hintId
+        });
+      });
+    }
+
+    // ====== CHART REFRESH (reuse existing charts & keep last data) ======
+    async function refreshCharts() {
+      if (!tokenState.length) return;
+
+      for (const entry of tokenState) {
+        const history = await fetchCoinGeckoHistoryForToken(entry.token);
+        const hintEl = document.getElementById(entry.hintId);
+
+        if (history && history.length > 1) {
+          // We got fresh data → update or create chart
+          entry.history = history;
+          if (hintEl) hintEl.textContent = "";
+
+          const labels = history.map(p => buildShortTime(p.time));
+          const prices = history.map(p => p.price);
+
+          if (entry.chart) {
+            // Update existing chart
+            entry.chart.data.labels = labels;
+            entry.chart.data.datasets[0].data = prices;
+            entry.chart.update();
+          } else {
+            // Create chart for the first time
+            const canvas = document.getElementById(entry.canvasId);
+            if (!canvas) continue;
+            const ctx = canvas.getContext("2d");
+
+            entry.chart = new Chart(ctx, {
+              type: "line",
+              data: {
+                labels,
+                datasets: [{
+                  data: prices,
+                  fill: true,
+                  tension: 0.35,
+                  borderWidth: 1.8,
+                  borderColor: "rgba(113,197,255,0.96)",
+                  backgroundColor: "rgba(113,197,255,0.10)",
+                  pointRadius: 0,
+                  pointHitRadius: 6
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                    callbacks: {
+                      label: (ctx) => formatCurrency(ctx.parsed.y)
+                    }
+                  }
+                },
+                scales: {
+                  x: {
+                    ticks: {
+                      color: "#cbd5ff",
+                      font: { size: 9 }
+                    },
+                    grid: { display: false }
+                  },
+                  y: {
+                    ticks: {
+                      color: "#a9b0d6",
+                      callback: (value) => formatCurrency(value)
+                    },
+                    grid: {
+                      color: "rgba(148,163,255,0.18)",
+                      drawBorder: false
+                    }
+                  }
+                }
+              }
+            });
+          }
+        } else {
+          // No new data
+          if (entry.history && entry.history.length > 1 && entry.chart) {
+            // We *do* have old data → keep chart as-is, just say we're using last known data
+            if (hintEl) {
+              hintEl.textContent = "Using last known data (CoinGecko temporarily unavailable).";
+            }
+          } else {
+            // No previous history at all → explain why
+            const id = getCoinGeckoId(entry.token);
+            if (hintEl) {
+              if (!id) {
+                hintEl.textContent =
+                  "No CoinGecko ID configured. Edit this token in the Tracker and fill in the CoinGecko ID (or use BTC, ETH, SOL, XRP, DOGE, ADA).";
+              } else {
+                hintEl.textContent =
+                  "No history data from CoinGecko yet. Try again in a bit.";
+              }
+            }
+          }
+        }
+      }
 
       const now = Date.now();
       lastUpdatedText.textContent =
@@ -628,9 +654,13 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-      updateAndRender();
+      buildUI();       // build cards + canvases + links once
+      refreshCharts(); // first data pull
+
       if (REFRESH_MS && REFRESH_MS > 0) {
-        setInterval(updateAndRender, REFRESH_MS);
+        setInterval(() => {
+          refreshCharts();
+        }, REFRESH_MS);
       }
     });
   </script>
