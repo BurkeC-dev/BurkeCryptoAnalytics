@@ -21,6 +21,7 @@
       --text-muted: #a9b0d6;
       --card-bg: rgba(12,14,35,0.95);
       --border-soft: rgba(140,155,255,0.3);
+      --pill-bg: linear-gradient(135deg, #bfa8ff, #71c5ff);
     }
 
     .soft-glow {
@@ -247,6 +248,34 @@
       height: 100% !important;
     }
 
+    .link-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.45rem 1.1rem;
+      border-radius: 999px;
+      background: var(--pill-bg);
+      color: #06061a;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      box-shadow:
+        0 0 3px var(--blue),
+        0 0 7px rgba(113,197,255,0.8);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.12s ease;
+      margin-top: 0.45rem;
+      margin-right: 0.35rem;
+    }
+
+    .link-pill:active {
+      transform: scale(0.97);
+      box-shadow:
+        0 0 2px var(--blue),
+        0 0 4px rgba(113,197,255,0.6);
+    }
+
     .empty-state {
       margin-top: 0.6rem;
       padding: 0.75rem 0.8rem;
@@ -297,7 +326,7 @@
     <main class="card">
       <h2 class="page-title underline-soft">Charts</h2>
       <p class="view-description">
-        Simple 5-day price lines for tokens that have a CoinGecko ID set in the Tracker.
+        Simple 5-day price lines for tokens with a CoinGecko ID, plus quick links to full GeckoTerminal charts for any token with a saved Solana address.
       </p>
       <p class="last-updated" id="lastUpdatedText"></p>
 
@@ -328,9 +357,10 @@
     });
 
     // ====== CONFIG ======
-    const STORAGE_KEY = "bca_tokens_v1";
-    const DAYS_BACK   = 5;
-    const REFRESH_MS  = 60000; // how often to refresh while page is open
+    const STORAGE_KEY   = "bca_tokens_v1";
+    const GECKO_NETWORK = "solana";
+    const DAYS_BACK     = 5;
+    const REFRESH_MS    = 60000; // how often to refresh while page is open
 
     const COINGECKO_MAP = {
       BTC: "bitcoin",
@@ -363,7 +393,8 @@
         name: token.name || token.tokenName || token.symbol || "Unknown",
         symbol: (token.symbol || token.ticker || "").toUpperCase(),
         amount: Number(token.amount ?? 0),
-        coingeckoId: token.coingeckoId || ""
+        coingeckoId: token.coingeckoId || "",
+        geckoTokenAddress: token.geckoTokenAddress || ""
       };
     }
 
@@ -429,6 +460,13 @@
       return `${month}/${day} ${hours}:${mins}`;
     }
 
+    function buildGeckoTerminalUrl(address) {
+      const trimmed = (address || "").trim();
+      if (!trimmed) return null;
+      const base = "https://www.geckoterminal.com";
+      return `${base}/${encodeURIComponent(GECKO_NETWORK)}/tokens/${encodeURIComponent(trimmed)}`;
+    }
+
     function destroyTokenCharts() {
       tokenChartInstances.forEach(ch => ch.destroy());
       tokenChartInstances = [];
@@ -449,7 +487,7 @@
         return;
       }
 
-      // Fetch CoinGecko history for all tokens in parallel
+      // Fetch CoinGecko history for all tokens
       const historyResults = await Promise.all(
         rawTokens.map(async (t) => {
           const history = await fetchCoinGeckoHistoryForToken(t);
@@ -481,6 +519,7 @@
         header.appendChild(sub);
         card.appendChild(header);
 
+        // --- Chart from CoinGecko if we have history ---
         if (history && history.length > 1) {
           const wrapper = document.createElement("div");
           wrapper.className = "chart-wrapper";
@@ -550,13 +589,32 @@
           const id = getCoinGeckoId(t);
           if (!id) {
             hint.textContent =
-              "No CoinGecko ID configured for this token. Edit it in the Tracker and fill in the CoinGecko ID (or use a mapped symbol like BTC, ETH, SOL, XRP, DOGE, ADA).";
+              "No CoinGecko ID configured. Edit this token in the Tracker and fill in the CoinGecko ID (or use a mapped symbol like BTC, ETH, SOL, XRP, DOGE, ADA) to see a line chart.";
           } else {
             hint.textContent =
-              "Could not load history from CoinGecko right now. Try again in a moment.";
+              "Could not load history from CoinGecko right now. Try again in a bit.";
           }
 
           card.appendChild(hint);
+        }
+
+        // --- GeckoTerminal link if we have a Solana token address ---
+        const geckoAddr = (t.geckoTokenAddress || "").trim();
+        const geckoUrl = buildGeckoTerminalUrl(geckoAddr);
+        if (geckoUrl) {
+          const link = document.createElement("a");
+          link.className = "link-pill";
+          link.href = geckoUrl;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.textContent = "Open live chart";
+
+          card.appendChild(link);
+
+          const linkHint = document.createElement("div");
+          linkHint.className = "hint";
+          linkHint.textContent = "Opens GeckoTerminal in a new tab with the full DEX chart.";
+          card.appendChild(linkHint);
         }
 
         tokenChartsContainer.appendChild(card);
@@ -566,7 +624,7 @@
 
       const now = Date.now();
       lastUpdatedText.textContent =
-        `Live from CoinGecko • last refreshed: ${formatTimestamp(now)}`;
+        `CoinGecko lines + GeckoTerminal links • last refreshed: ${formatTimestamp(now)}`;
     }
 
     document.addEventListener("DOMContentLoaded", () => {
