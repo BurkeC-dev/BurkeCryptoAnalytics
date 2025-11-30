@@ -467,11 +467,17 @@
       let totalCost  = 0;
       let totalValue = 0;
 
-      tokens.forEach(t => {
+      // Build metrics per token so we can both sum totals AND sort by P/L
+      const tokensWithMetrics = tokens.map(t => {
         const cost  = safeNumber(t.cost ?? t.totalSpent ?? 0);
         const value = safeNumber(t.value ?? 0);
+        const pnl   = value - cost;
+        const pct   = cost !== 0 ? (pnl / cost) * 100 : 0;
+
         totalCost  += cost;
         totalValue += value;
+
+        return { raw: t, cost, value, pnl, pct };
       });
 
       const totalPnl = totalValue - totalCost;
@@ -502,37 +508,40 @@
 
       statTokenCount.textContent = tokens.length.toString();
 
-      // Per-token mini list (single top line only)
+      // Per-token mini list (single top line only), sorted by P/L descending
       tokensSection.classList.remove("hidden");
       tokensList.innerHTML = "";
 
-      tokens.forEach(t => {
-        const cost  = safeNumber(t.cost ?? t.totalSpent ?? 0);
-        const value = safeNumber(t.value ?? 0);
-        const pnl   = value - cost;
-        const pct   = cost !== 0 ? (pnl / cost) * 100 : 0;
+      tokensWithMetrics
+        .sort((a, b) => b.pnl - a.pnl) // highest profit first
+        .forEach(m => {
+          const t    = m.raw;
+          const pnl  = m.pnl;
+          const pct  = m.pct;
+          const cost = m.cost;
+          const value = m.value;
 
-        const pnlSignToken = pnl >= 0 ? "+" : "-";
-        const pctSignToken = pct >= 0 ? "+" : "-";
-        const pnlClassToken = pnl >= 0 ? "pnl-positive" : "pnl-negative";
+          const pnlSignToken = pnl >= 0 ? "+" : "-";
+          const pctSignToken = pct >= 0 ? "+" : "-";
+          const pnlClassToken = pnl >= 0 ? "pnl-positive" : "pnl-negative";
 
-        const card = document.createElement("div");
-        card.className = "mini-token-card";
+          const card = document.createElement("div");
+          card.className = "mini-token-card";
 
-        card.innerHTML = `
-          <div class="mini-header-row">
-            <div class="mini-name">${t.name} (${t.symbol})</div>
-            <div class="mini-value ${pnlClassToken}">
-              ${pnlSignToken}$${formatMoney(Math.abs(pnl))}
-              <span class="mini-pct ${pnlClassToken}">
-                ${pctSignToken}${Math.abs(pct).toFixed(2)}%
-              </span>
+          card.innerHTML = `
+            <div class="mini-header-row">
+              <div class="mini-name">${t.name} (${t.symbol})</div>
+              <div class="mini-value ${pnlClassToken}">
+                ${pnlSignToken}$${formatMoney(Math.abs(pnl))}
+                <span class="mini-pct ${pnlClassToken}">
+                  ${pctSignToken}${Math.abs(pct).toFixed(2)}%
+                </span>
+              </div>
             </div>
-          </div>
-        `;
+          `;
 
-        tokensList.appendChild(card);
-      });
+          tokensList.appendChild(card);
+        });
     }
 
     // Render on load
